@@ -34,7 +34,7 @@ public class ApiDict {
             Document document = new ApiParser().parseXML(urlConnection.getInputStream());
             NodeList nodeList = document.getElementsByTagName("item");
             StringBuilder sb = new StringBuilder("");
-            if(nodeList.getLength()==0) return keyword+"는 모르겠어요.";
+            if(nodeList.getLength()==0) return keyword+"..? 처음들어요.";
 //          for(int i = 0; i< nodeList.getLength() ; i++)   // 1건만 나오도록 주석처리..
             int i = new Random().nextInt(nodeList.getLength()); // for 대신에 랜덤 1건만
                 for(Node node = nodeList.item(i).getFirstChild(); node!=null; node=node.getNextSibling()){
