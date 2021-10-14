@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.osy.callapi.ApiCoin;
 import com.osy.callapi.ApiCorona;
+import com.osy.callapi.ApiDict;
 import com.osy.callapi.ApiKMA;
 import com.osy.callapi.ApiSellApart;
 import com.osy.roledb.RoleDB;
@@ -288,6 +289,10 @@ public class ReplyConstraint {
             }catch (Exception e){
                 e.printStackTrace();
             }
+        }
+        if(keyword.endsWith("가 뭐야") || keyword.endsWith("이 뭐야") ){
+            keyword = keyword.substring(0, keyword.lastIndexOf("뭐야")-2);
+            return new ApiDict(context).searchDictionary(keyword);
         }
         return null;
     }

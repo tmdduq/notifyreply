@@ -7,6 +7,7 @@
         <domain includeSubdomains="true">openapi.molit.go.kr</domain>
         <domain includeSubdomains="true">openapi.molit.go.kr:8081</domain>
         <domain includeSubdomains="true">api.bithumb.com</domain>
+        <domain includeSubdomains="true">stdict.korean.go.kr</domain>
 
     </domain-config>
 </network-security-config>
