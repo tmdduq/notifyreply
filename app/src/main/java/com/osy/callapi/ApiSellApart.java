@@ -30,8 +30,15 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class ApiSellApart {
     final String TAG = "ApiSellApart";
-    final String ApiKey = Resources.getSystem().getString(R.string.dataPotalKey);
-    public String getPrice(Context context, String addr){
+    String ApiKey = null;
+    Context context;
+
+    public ApiSellApart(Context context){
+        this.context = context;
+        ApiKey = context.getResources().getString(R.string.sellApartKey);
+    }
+
+    public String getPrice(String addr){
         String landCode = null;
         try {
             InputStream is = context.getAssets().open("realSellApart.txt", AssetManager.ACCESS_BUFFER);

@@ -22,8 +22,10 @@ import java.util.Calendar;
 import java.util.List;
 
 public class ApiKMA {
-    final String APIKey = Resources.getSystem().getString(R.string.dataPotalKey);
+     String APIKey = null;
     final String TAG = "ApiKMA";
+
+
     public class Code{
 
         final int BASEDATE = 0;
@@ -58,6 +60,8 @@ public class ApiKMA {
     ApiParser apiParser;
 
     public ApiKMA(Context context){
+        APIKey = context.getResources().getString(R.string.KMAKey);
+        //context.getResources.getSystem().getString(R.string.dataPotalKey);
         apiParser =new ApiParser();
         try {
             records = CSVFormat.EXCEL.parse(new InputStreamReader(context.getAssets().open("KMA.csv", AssetManager.ACCESS_BUFFER))).getRecords();

@@ -7,13 +7,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
-    static boolean onoff = true;
+    static boolean globalOnOff = true;
     TextView tv;
     Button bt;
     EditText room, key, values;
@@ -33,24 +34,22 @@ public class MainActivity extends AppCompatActivity {
         rs.setInitialize(this);
 
         bt.setOnClickListener(v -> {
-            onoff = !onoff;
-            bt.setText(""+onoff);
-            if(onoff) {
-                String t = "학습하기+"+key.getText().toString()+"+"+values.getText().toString();
-
-                tv.setText("\n"+ tv.getText());
-            }
+            globalOnOff = !globalOnOff;
+            bt.setText(""+globalOnOff);
+        });
+        ((Button)findViewById(R.id.button2)).setOnClickListener(view->{
+                 Intent intentnew = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                   startActivity(intentnew);
         });
 
-   //     Intent intentnew = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-//        Intent intentnew = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
- //       startActivity(intentnew);
-
-
-        receiver = new NotificationReceiver();
+        receiver = new NotificationReceiver( );
         IntentFilter filter = new IntentFilter("com.osy.notifyreply");
         registerReceiver(receiver,filter);
+
     }
+
+
+
 
     class NotificationReceiver extends BroadcastReceiver{
         @Override

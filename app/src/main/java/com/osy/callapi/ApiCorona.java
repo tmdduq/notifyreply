@@ -1,5 +1,6 @@
 package com.osy.callapi;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.util.Log;
 
@@ -14,7 +15,11 @@ import java.text.DecimalFormat;
 
 public class ApiCorona {
     final String TAG = "ApiCorona";
-    final String ApiKey = Resources.getSystem().getString(R.string.coronaKey);
+    String ApiKey = null;
+
+    public ApiCorona(Context context){
+        ApiKey = context.getResources().getString(R.string.coronaKey);
+    }
 
     public String getNationalCorona(){
         String urlString = "https://api.corona-19.kr/korea/?serviceKey="+ApiKey;

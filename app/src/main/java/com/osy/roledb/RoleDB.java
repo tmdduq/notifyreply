@@ -95,7 +95,7 @@ public class RoleDB extends SQLiteOpenHelper {
 
     }
 
-    public Cursor getContainsKeyList(@Nullable String room){
+    public Cursor getContainsKeyList(String room){
         SQLiteDatabase db = getReadableDatabase();
         String qry;
         if(room==null)

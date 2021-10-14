@@ -16,6 +16,8 @@ import com.osy.callapi.ApiKMA;
 
 import java.util.List;
 
+import static com.osy.notifyreply.MainActivity.globalOnOff;
+
 public class NotifiService extends NotificationListenerService {
     ReplyConstraint rs;
 
@@ -24,8 +26,8 @@ public class NotifiService extends NotificationListenerService {
     public void onNotificationPosted(StatusBarNotification sbn) {
         super.onNotificationPosted(sbn);
 
-
-        if(!MainActivity.onoff){
+        if(!globalOnOff){
+            Log.i(TAG, "Global On Off -> OFF");
             stopSelf();
             return;
         }

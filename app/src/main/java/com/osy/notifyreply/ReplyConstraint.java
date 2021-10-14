@@ -1,7 +1,6 @@
 package com.osy.notifyreply;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.util.Log;
 
@@ -15,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+
+import static com.osy.notifyreply.MainActivity.globalOnOff;
 
 public class ReplyConstraint {
     final String TAG = "ReplyConstraint";
@@ -118,17 +119,31 @@ public class ReplyConstraint {
     }
 
     public String ifShowReplyList(String room,String keyword){
-        if(keyword.matches("학습목록보기") ||keyword.matches("ㅎㅅㅁㄹㅂㄱ")|| keyword.matches("ㅎㅅㅁㄼㄱ")   ) {
-            Cursor cursor = roleDB.getContainsKeyList(room);
+        if(keyword.startsWith("학습목록보기") ||keyword.startsWith("ㅎㅅㅁㄹㅂㄱ")|| keyword.startsWith("ㅎㅅㅁㄼㄱ")   ) {
+            Cursor cursor;
             StringBuilder sb = new StringBuilder("");
-            while (cursor.moveToNext()) {
-                String key = cursor.getString(1);
-                String value = cursor.getString(2);
-                int num = cursor.getInt(3);
-                sb.append(num + "/" + key + "/" + value + "\n");
+            if(keyword.matches("학습목록보기 전체다")) {
+                cursor = roleDB.getContainsKeyList(null);
+                while (cursor.moveToNext()) {
+                    String key = cursor.getString(1);
+                    room = cursor.getString(0);
+                    String value = cursor.getString(2);
+                    int num = cursor.getInt(3);
+                    sb.append(num + "/" +room +"/"+ key + "/" + value + "\n");
+                }
+            }
+            else {
+                cursor = roleDB.getContainsKeyList(room);
+                while (cursor.moveToNext()) {
+                    String key = cursor.getString(1);
+                    String value = cursor.getString(2);
+                    int num = cursor.getInt(3);
+                    sb.append(num + "/" + key + "/" + value + "\n");
+                }
             }
             return sb.toString();
         }
+
         return null;
     }
 
@@ -144,6 +159,9 @@ public class ReplyConstraint {
     }
 
     public String ifOnOff(String room, String keyword){
+        if(isOperation.get(room)==null){
+            setKeyList(room,"안녕","안녕하세요");
+        }
         if(keyword.matches("이제그만") && isOperation.get(room)) {
             isOperation.replace(room,false);
             return "채팅을 중지할게요.";
@@ -225,6 +243,7 @@ public class ReplyConstraint {
                 if (addr[2].contains("날씨"))
                     return new ApiKMA(context).getWeather(addr[0], addr[1]);
             } catch (Exception e) {
+                e.printStackTrace();
                 String t = "날씨가 궁금하면 아래와 같이 검색해보세요!\n" +
                         "[구] [동] 날씨\n " +
                         "예시)부평구 삼산1동 날씨";
@@ -233,13 +252,14 @@ public class ReplyConstraint {
             return null;
         }
         if(keyword.contains("코로나 현황")){
-            return new ApiCorona().getNationalCorona();
+            return new ApiCorona(context).getNationalCorona();
         }
         if(keyword.contains(" 실거래가")){
             try {
                 String addr = keyword.substring(0, keyword.indexOf("실거래가")-1);
-                return new ApiSellApart().getPrice(context,addr);
+                return new ApiSellApart(context).getPrice(addr);
             } catch (Exception e) {
+                e.printStackTrace();
                 String t = "부동산 실거래가기 궁금하면 아래와 같이 검색해보세요!\n" +
                         "[법정동] 실거래가\n" +
                         "예시1)인천광역시 연수구 실거래가\n" +
@@ -281,7 +301,7 @@ public class ReplyConstraint {
         String t = "말을 가르치고 싶으세요?\n" +
                 "학습하기+키워드+대답 을 입력해보세요!\n" +
                 "예시) 학습하기+배고파+밥먹어";
-        if(str.startsWith("학습하기"))
+        if(str.startsWith("학습하기") ||str.startsWith("ㅎㅅㅎㄱ"))
             try {
                 String[] s = str.split("\\+");
                 String keyword = s[1];
