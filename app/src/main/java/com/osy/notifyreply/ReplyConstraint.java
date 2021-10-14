@@ -149,9 +149,9 @@ public class ReplyConstraint {
     }
 
     public boolean addContainsKeyword(String room, String key, String value){
-        if(room.length() > 25) room = room.substring(0,25);
-        if(key.length() > 15) key = key.substring(0,15);
-        if(value.length() > 40) value= value.substring(0,40);
+        if(room.length() > 27) room = room.substring(0,27);
+        if(key.length() > 18) key = key.substring(0,18);
+        if(value.length() > 90) value= value.substring(0,90);
 
         setKeyList(room, key, value);
         roleDB.insertContainKeyword(room, key, value);
@@ -174,8 +174,8 @@ public class ReplyConstraint {
         return null;
     }
     public String checkKeyword(String room, String keyword){
-        if(room.length() > 25) room = room.substring(0,25);
-        if(keyword.length() > 60) keyword = keyword.substring(0,60);
+        if(room.length() > 27) room = room.substring(0,27);
+        if(keyword.length() > 120) keyword = keyword.substring(0,120);
 
         String reply;
 
