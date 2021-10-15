@@ -109,7 +109,7 @@
 # 개발자를 위한 서비스 플로우
 - 어플 실행
  1. MainActivity.java -> onCreate() 실행. 간단한 화면 하나를 만듦
- 2. NotifiService.java -> 알림바(Notification) 서비스 리스너 실행.
+ 2. NotifiService.java -> 알림바(Notification) 서비스 리스너 실행. (백그라운드, 포어그라운드에서 동작)
 - 카톡 메시지 수신
  3. NotifiService.java -> onNotificationPosted() 실행.
  4. sendReply() 받은 메시지를 파싱 -> 또 언제쓸지 모르니 MainActivity로 브로트캐스트
