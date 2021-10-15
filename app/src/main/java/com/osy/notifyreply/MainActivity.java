@@ -37,10 +37,8 @@ public class MainActivity extends AppCompatActivity {
             globalOnOff = !globalOnOff;
             bt.setText(""+globalOnOff);
         });
-        ((Button)findViewById(R.id.button2)).setOnClickListener(view->{
-                 Intent intentnew = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-                   startActivity(intentnew);
-        });
+        ((Button)findViewById(R.id.button2)).setOnClickListener(
+                view-> startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")));
 
         receiver = new NotificationReceiver( );
         IntentFilter filter = new IntentFilter("com.osy.notifyreply");

@@ -9,12 +9,18 @@ import com.osy.callapi.ApiCorona;
 import com.osy.callapi.ApiDict;
 import com.osy.callapi.ApiKMA;
 import com.osy.callapi.ApiSellApart;
+import com.osy.callapi.RssTopSearch;
 import com.osy.roledb.RoleDB;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.BinaryOperator;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.osy.notifyreply.MainActivity.globalOnOff;
 
@@ -24,6 +30,8 @@ public class ReplyConstraint {
     private static ReplyConstraint instance = null;
     private RoleDB roleDB=null;
     protected Map<String, Boolean> isOperation;
+
+    final boolean TEST_integralRoom = true;
 
     public class DataRoom<T>{
         String label;
@@ -45,6 +53,7 @@ public class ReplyConstraint {
     }
 
     public void setKeyList(String insertRoom, String insertKey, String insertValue) {
+        if(TEST_integralRoom) insertRoom = "commonRoom";
         int RoomIndex=0;
         for( ; RoomIndex <roomNodes.size() ; RoomIndex++) {
 
@@ -174,6 +183,7 @@ public class ReplyConstraint {
         return null;
     }
     public String checkKeyword(String room, String keyword){
+        if(TEST_integralRoom) room = "commonRoom";
         if(room.length() > 27) room = room.substring(0,27);
         if(keyword.length() > 120) keyword = keyword.substring(0,120);
 
@@ -290,10 +300,24 @@ public class ReplyConstraint {
                 e.printStackTrace();
             }
         }
-        if(keyword.endsWith("가 뭐야") || keyword.endsWith("이 뭐야") ){
-            keyword = keyword.substring(0, keyword.lastIndexOf("뭐야")-2);
+        /*Stream API 연습
+        IntStream.range(1, 11 ).filter(i-> i%2==0).forEach(System.out::println);
+        String keyword2[] = new String[]{"asdad"};
+        IntStream.range(0,words.length).filter(i -> keyword2[0].contains(words[i])).findFirst();
+        람다식 API 연습
+        String[] ss = new String[]{"가 뭐야","이 뭐야","은 뭐야","는 뭐야","가 뭐냐","이 뭐냐","은 뭐냐","는 뭐냐"};
+        Arrays.asList(ss).forEach(s -> {
+            if(k.contains(s))
+            k.substring(0, k.lastIndexOf("뭐")-2);
+        });*/
+        for( String w : new String[]{"가 뭐야","이 뭐야","은 뭐야","는 뭐야","가 뭐냐","이 뭐냐","은 뭐냐","는 뭐냐"})
+            if(keyword.contains(w)){
+            keyword = keyword.substring(0, keyword.lastIndexOf("뭐")-2);
             return new ApiDict(context).searchDictionary(keyword);
         }
+        if(keyword.contains("검색어") && (keyword.contains("실시간") || keyword.contains("인기")) )
+            return new RssTopSearch().getTopSearchKeyword();
+
         return null;
     }
     public String ifMatchExpletiveKeyword(String room, String keyword){
