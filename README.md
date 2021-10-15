@@ -108,14 +108,18 @@
 
 # 개발자를 위한 서비스 플로우
 - 어플 실행
- 1. MainActivity.java -> onCreate() 실행. 간단한 화면 하나를 만듦
- 2. NotifiService.java -> 알림바(Notification) 서비스 리스너 실행. (백그라운드, 포어그라운드에서 동작)
+ 1. MainActivity.java -> onCreate() 간단한 화면 하나를 만듦
+ 2. ReplyConstraint.java -> setInitialize() 앱에 내장된 DB에 저장된 지난 학습내용을 메모리(static roomNodes변수)로 가져옴
+- Key:Value가 1:N인 3단계 트리구조의 자료형이 뭐가 있는지 몰라서 임의의 구조체(DataRoom<Generic T> class)를 만들어서 사용
+- Map도 생각해봤는데 Map은 하나의 키워드(Key)에 중복 응답메시지(Value) 입력이 안됨.. // 배열은 사이즈 확장이 안됨... // 링크드리스트랑 벡터까지 생각해봤는데 ArrayList가 속도가 가장 빠르다고해서 이걸 기반으로 해봄
+ 4. NotifiService.java -> 알림바(Notification) 서비스 리스너 실행. (백그라운드, 포어그라운드에서 동작)
 - 카톡 메시지 수신
- 3. NotifiService.java -> onNotificationPosted() 실행.
- 4. sendReply() 받은 메시지를 파싱 -> 또 언제쓸지 모르니 MainActivity로 브로트캐스트
+ 4. 카톡이 오는 것을 Listen.... ............. ...... ...
+ 5. 왔다!! NotifiService.java -> onNotificationPosted() 실행.
+ 6. sendReply() 받은 알림(Notification)을 파싱 -> 또 언제쓸지 모르니 MainActivity로 브로트캐스트
 - 답장 문자열 생성
- 5. ReplyConstraint.java ->  checkKeyword()로 메시지를 체크하여 답장 문자열 생성
- 6. NotifiService -> sendReply()로 답장 전송 
+ 7. ReplyConstraint.java ->  checkKeyword()로 메시지를 체크하여 답장 문자열 생성
+ 8. NotifiService -> sendReply()로 답장 전송 
 
 
 # 
@@ -165,4 +169,6 @@
  >>u. chatLogId : 2624473650577811456
  >>
 
-
+# 학습내용 관리
+ - 앱 안에 DB 내장.
+ - 어플을 실행하면 DB에서 -> 메모리(Static )로 데이터를 가져옴
