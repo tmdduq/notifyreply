@@ -120,7 +120,7 @@
 
 # 
 > 알림바에서 파싱해올 수 있는 21가지 메시지 (sample)
-> 
+> 스토어에 많고 많은 카톳봇이 있지만 response함수가 다 똑같이 생겼던 이유는 써먹을만한게 그것밖에없기 때문.. 
  >>a. android.title : 보낸사람이름
  >>
  >>b. android.reduced.images : true
