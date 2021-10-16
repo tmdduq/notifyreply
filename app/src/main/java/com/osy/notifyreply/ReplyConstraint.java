@@ -34,7 +34,7 @@ public class ReplyConstraint {
     private RoleDB roleDB=null;
     protected Map<String, Boolean> isOperation;
     ArrayList<DataRoom<DataRoom<String>>> roomNodes;
-
+    DataRoom<DataRoom<String>> commonKeyNodes;
     Map<String, String> beforeConsonantGame = new HashMap<String,String>();
     Map<String, Map<String, Integer> > personAndScore = new HashMap<String, Map<String, Integer> >();
     ArrayList<String> allQuestion =null;
