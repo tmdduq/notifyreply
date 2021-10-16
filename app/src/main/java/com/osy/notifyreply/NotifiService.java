@@ -76,8 +76,10 @@ public class NotifiService extends NotificationListenerService {
             try {
                 Thread.sleep(2000);
                 if(new Random().nextInt(10)<2) sendReply(context, act, "와 잘하세요!");
+                if(new Random().nextInt(50)<2) sendReply(context, act, "점수가 궁금하면 [점수 확인]!");
+                if(new Random().nextInt(50)<2) sendReply(context, act, "그만하시려면 [퀴즈중지]!");
                 Thread.sleep(2000);
-                replyMessage =  rs.checkKeyword(sender,roomName,"퀴즈이어가기");
+                replyMessage =  rs.checkKeyword(sender,roomName,"퀴즈시작이어가기");
                 sendReply(context, act, replyMessage);
             }catch (Exception e){
                 e.printStackTrace();

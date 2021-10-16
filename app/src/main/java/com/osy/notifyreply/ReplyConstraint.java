@@ -1,8 +1,11 @@
 package com.osy.notifyreply;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.database.Cursor;
+import android.os.Environment;
+import android.renderscript.ScriptGroup;
 import android.util.Log;
 
 import com.osy.callapi.ApiCoin;
@@ -15,9 +18,12 @@ import com.osy.roledb.RoleDB;
 import com.osy.utility.DataRoom;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -27,7 +33,11 @@ public class ReplyConstraint {
     private static ReplyConstraint instance = null;
     private RoleDB roleDB=null;
     protected Map<String, Boolean> isOperation;
+    ArrayList<DataRoom<DataRoom<String>>> roomNodes;
 
+    Map<String, String> beforeConsonantGame = new HashMap<String,String>();
+    Map<String, Map<String, Integer> > personAndScore = new HashMap<String, Map<String, Integer> >();
+    ArrayList<String> allQuestion =null;
 
     public static ReplyConstraint getInstance(){
         if(instance ==null)
@@ -38,14 +48,16 @@ public class ReplyConstraint {
         this.context = context;
     }
 
-    ArrayList<DataRoom<DataRoom<String>>> roomNodes;
+
     ReplyConstraint() {
         isOperation = new HashMap<String, Boolean>();
     }
 
     public String checkKeyword(String sender, String room, String keyword){
         if(room.length() > 27) room = room.substring(0,27);
-        if(keyword.length() > 120) keyword = keyword.substring(0,120);
+        try {
+            if (keyword.length() > 120) keyword = keyword.substring(0, 120);
+        }catch (Exception e){return null;}
 
         String reply;
 
@@ -104,6 +116,7 @@ public class ReplyConstraint {
             Log.i(TAG, "setInstance readRole(r/k/v): "+room+"/"+key+"/"+value);
             roomNodes = new ReplyFunction().setKeyList(roomNodes, room , key, value);
         }
+
         //        showNodes();
     }
 
@@ -294,17 +307,15 @@ public class ReplyConstraint {
     }
 
 
-    Map<String, String> beforeConsonantGame = new HashMap<String,String>();
-    Map<String, Map<String, Integer> > personAndScore = new HashMap<String, Map<String, Integer> >();
-    ArrayList<String> allQnA =null;
+
     public String ifConsonantGame(String sender, String room, String str){
         Log.i(TAG, "ifConsonantGame");
-
         String answar = beforeConsonantGame.get(room);
+
         if(answar!=null) {
-            if (str.matches(answar)) {
+            if (str.matches(answar)) { // SCORE +
                 if (personAndScore.get(room) == null) {
-                    personAndScore.put(room, new HashMap<String, Integer>());
+                    personAndScore.put(room, new HashMap<String, Integer>() );
                     personAndScore.get(room).put(sender, 1);
                 }
                 else if(personAndScore.get(room).get(sender) == null)
@@ -314,9 +325,9 @@ public class ReplyConstraint {
                 beforeConsonantGame.remove(room);
                 return sender + "님 " + personAndScore.get(room).get(sender) + "점!\n" + answar + " 정답이에요!";
             }
-            else if (str.contains("포기")) {
+            else if (  str.contains("퀴즈") && (str.contains("포기") || str.contains("그만") || str.contains("중지"))) {
                 beforeConsonantGame.remove(room);
-                return "퀴즈를 포기했어요.ㅠ\n정답은 " + answar+"이였어요..\n계속하시려면 [퀴즈]를 외쳐주세요!";
+                return "퀴즈를 포기했어요.ㅠ\n정답은 " + answar+"이였어요..\n계속하려면 [퀴즈시작]를 외쳐주세요!";
             }
             else if(str.contains("힌트")){
                 String question= new ReplyFunction().consonant(answar);
@@ -327,26 +338,51 @@ public class ReplyConstraint {
             }
         }
 
-        if(str.contains("퀴즈")) {
-            if(answar != null) return "지난퀴즈 정답자가 없어요.\n주제는 롤! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar);
-            try {
-                String readLine;
-                if(allQnA==null) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("consonantGame_LoL", AssetManager.ACCESS_BUFFER)));
-                    allQnA = new ArrayList<String>();
-                    while (null != (readLine = br.readLine())) allQnA.add(readLine);
-                }
-                readLine = allQnA.get(new Random().nextInt(allQnA.size()));
-                beforeConsonantGame.put(room, readLine);
-                if(str.matches("퀴즈이어가기"))
-                    return "다음 문제에요!\n초성: " + new ReplyFunction().consonant(readLine);
-                else
-                    return str+" 주제는 롤! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(readLine);
+        if(str.contains("퀴즈") && str.contains("시작")) {
+            if(answar != null)
+                return "지난퀴즈 정답자가 없어요.\n주제는 롤! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar);
 
+            try {
+                String question;
+                if(allQuestion==null) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("consonantGame_LoL", AssetManager.ACCESS_BUFFER)));
+                    allQuestion = new ArrayList<String>();
+                    while (null != (question = br.readLine())) allQuestion.add(question);
+                }
+                question = allQuestion.get(new Random().nextInt(allQuestion.size()));
+                beforeConsonantGame.put(room, question);
+                if(str.matches("퀴즈시작이어가기"))
+                    return "다음 문제에요!\n초성: " + new ReplyFunction().consonant(question);
+                else
+                    return " 주제는 롤! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(question);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        if(str.contains("점수") && (str.contains("확인") || str.contains("보기")) ){
+            StringBuilder sb = new StringBuilder("");
+            Map<String, Integer> m = personAndScore.get(room);
+            if(m==null) return null;
+            List<Map.Entry<String, Integer>> list = new ArrayList<>(m.entrySet());
+            list.sort(Map.Entry.comparingByValue());
+            for(int i = 0 ; i < list.size() ; i++) {
+                Map.Entry<String, Integer> v = list.get( list.size()-1-i );
+                String person = v.getKey().length()>4 ? (v.getKey().substring(0,4)+"..") : v.getKey();
+                sb.append((i+1)+"위 "+person + "님 (+" + v.getValue() + ")\n");
+                if(i==4){ break;}
+            }
+            sb.append("정답자는 총 "+list.size()+"명이에요.");
+            return sb.toString();
+        }
+
+        if(str.contains("문제추가 ")) {
+            try {
+                allQuestion.add(str.substring(5));
+                return str.substring(5) + new ReplyFunction().consonant(str.substring(5)) + " 추가했어요\n" +
+                        "문제는 총 "+allQuestion.size()+"개에요.";
+            }catch (Exception e){ }
+        }
+
 
         return null;
     }
