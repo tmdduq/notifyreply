@@ -15,6 +15,7 @@ import android.util.Log;
 import com.osy.callapi.ApiKMA;
 
 import java.util.List;
+import java.util.Random;
 
 import static com.osy.notifyreply.MainActivity.globalOnOff;
 
@@ -42,17 +43,18 @@ public class NotifiService extends NotificationListenerService {
 
         for(Notification.Action act : wearableAction){
             if(act.getRemoteInputs() != null && act.getRemoteInputs().length>0){
-                sendReply(getApplicationContext(), act, replyString(sbn.getNotification()));
+
+                replyString(getApplicationContext(), act, sbn.getNotification());
                 stopSelf();
+
             }
         }
         }).start();
     }
 
-    public String replyString(Notification notification){
+    public void replyString(Context context, Notification.Action act, Notification notification){
         rs = ReplyConstraint.getInstance();
         rs.setContext(this);
-
 
         //Share MainActivity
         String sender = notification.extras.getString("android.title");
@@ -64,10 +66,24 @@ public class NotifiService extends NotificationListenerService {
         intent.putExtra("message", message);
         sendBroadcast(intent);
 
-        Log.i(TAG, "replyString roomName/message : " + roomName+"/"+message);
 
-        String replyMessage =  rs.checkKeyword(roomName,message);
-        return replyMessage;
+        Log.i(TAG, "replyString roomName/message : " + roomName+"/"+message);
+        String replyMessage =  rs.checkKeyword(sender,roomName,message);
+
+        sendReply(context, act, replyMessage);
+
+        if(replyMessage!=null && replyMessage.endsWith(" 정답이에요!"))
+            try {
+                Thread.sleep(2000);
+                if(new Random().nextInt(10)<2) sendReply(context, act, "와 잘하세요!");
+                Thread.sleep(2000);
+                replyMessage =  rs.checkKeyword(sender,roomName,"퀴즈이어가기");
+                sendReply(context, act, replyMessage);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+
+
     }
 
 

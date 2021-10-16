@@ -1,6 +1,7 @@
 package com.osy.notifyreply;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.util.Log;
 
@@ -11,18 +12,14 @@ import com.osy.callapi.ApiKMA;
 import com.osy.callapi.ApiSellApart;
 import com.osy.callapi.RssTopSearch;
 import com.osy.roledb.RoleDB;
+import com.osy.utility.DataRoom;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.function.BinaryOperator;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static com.osy.notifyreply.MainActivity.globalOnOff;
 
 public class ReplyConstraint {
     final String TAG = "ReplyConstraint";
@@ -31,12 +28,6 @@ public class ReplyConstraint {
     private RoleDB roleDB=null;
     protected Map<String, Boolean> isOperation;
 
-    final boolean TEST_integralRoom = true;
-
-    public class DataRoom<T>{
-        String label;
-        ArrayList<T> dataList;
-    }
 
     public static ReplyConstraint getInstance(){
         if(instance ==null)
@@ -52,49 +43,38 @@ public class ReplyConstraint {
         isOperation = new HashMap<String, Boolean>();
     }
 
-    public void setKeyList(String insertRoom, String insertKey, String insertValue) {
-        if(TEST_integralRoom) insertRoom = "commonRoom";
-        int RoomIndex=0;
-        for( ; RoomIndex <roomNodes.size() ; RoomIndex++) {
+    public String checkKeyword(String sender, String room, String keyword){
+        if(room.length() > 27) room = room.substring(0,27);
+        if(keyword.length() > 120) keyword = keyword.substring(0,120);
 
-            if (roomNodes.get(RoomIndex).label.matches(insertRoom)) {//방이 이미 있으면,
-                DataRoom<DataRoom<String>> room = roomNodes.get(RoomIndex);
-                int keyIndex = 0;
+        String reply;
 
-                for (; keyIndex < room.dataList.size(); keyIndex++) { // 키가 있으면,
+        reply = ifOnOff(room, keyword);
+        if(reply != null) return reply;
+        if(!isOperation.get(room)) return null;
 
-                    if (room.dataList.get(keyIndex).label.matches(insertKey)) {
-                        DataRoom<String> key = room.dataList.get(keyIndex);
-                        key.dataList.add(insertValue);
-                        keyIndex=room.dataList.size()+1;
-                        return;
-                    }
-                }
-                if (keyIndex == room.dataList.size()) { //키가 없으면, 생성
-                    ArrayList<String> values = new ArrayList<String>();
-                    values.add(insertValue);
-                    DataRoom<String> key = new DataRoom<String>();
-                    key.label = insertKey;
-                    key.dataList = values;
-                    room.dataList.add(key);
-                    return;
-                }
-            }
-        }
-        if(RoomIndex==roomNodes.size()){ // 방이 없으면, 생성
-            ArrayList<String> values = new ArrayList<String>();
-            values.add(insertValue);
-            DataRoom<String> key = new DataRoom<String>();
-            key.label = insertKey;
-            key.dataList = values;
-            DataRoom<DataRoom<String>> createRoom = new DataRoom<DataRoom<String>>();
-            createRoom.label = insertRoom;
-            createRoom.dataList = new ArrayList<DataRoom<String>>();
-            createRoom.dataList.add(key);
-            roomNodes.add(createRoom);
-            isOperation.put(insertRoom,true);
-        }
+        reply = ifMatchExpletiveKeyword(room,keyword);
+        if(reply != null) return reply;
 
+        reply = ifDeleteKey(room,keyword);
+        if(reply != null) return reply;
+
+        reply = ifShowReplyList(room, keyword);
+        if(reply != null) return reply;
+
+        reply = ifEducateKeyword(room,keyword);
+        if(reply != null) return reply;
+
+        reply = ifApiQuestion(room,keyword,context);
+        if(reply != null) return reply;
+
+        reply = ifConsonantGame(sender, room,keyword);
+        if(reply != null) return reply;
+
+        reply = ifContainsKeyword(room,keyword);
+        if(reply != null) return reply;
+
+        return null;
     }
 
     public void showNodes(){
@@ -115,7 +95,6 @@ public class ReplyConstraint {
     public void setInitialize(Context context){
         if(roleDB==null)
             roleDB = new RoleDB(context,"roleList",null,4);
-
         Cursor cursor = roleDB.getContainsKeyList(null); // contains
         roomNodes = new ArrayList<DataRoom<DataRoom<String>>>();
         while(cursor.moveToNext()) {
@@ -123,7 +102,7 @@ public class ReplyConstraint {
             String key = cursor.getString(1);
             String value = cursor.getString(2);
             Log.i(TAG, "setInstance readRole(r/k/v): "+room+"/"+key+"/"+value);
-            setKeyList(room , key, value);
+            roomNodes = new ReplyFunction().setKeyList(roomNodes, room , key, value);
         }
         //        showNodes();
     }
@@ -162,7 +141,7 @@ public class ReplyConstraint {
         if(key.length() > 18) key = key.substring(0,18);
         if(value.length() > 90) value= value.substring(0,90);
 
-        setKeyList(room, key, value);
+        roomNodes = new ReplyFunction().setKeyList(roomNodes, room, key, value);
         roleDB.insertContainKeyword(room, key, value);
         setInitialize(context);
         return true;
@@ -170,7 +149,7 @@ public class ReplyConstraint {
 
     public String ifOnOff(String room, String keyword){
         if(isOperation.get(room)==null){
-            setKeyList(room,"안녕","안녕하세요");
+            roomNodes = new ReplyFunction().setKeyList(roomNodes, room,"안녕","안녕하세요");
         }
         if(keyword.matches("이제그만") && isOperation.get(room)) {
             isOperation.replace(room,false);
@@ -182,37 +161,7 @@ public class ReplyConstraint {
         }
         return null;
     }
-    public String checkKeyword(String room, String keyword){
-        if(TEST_integralRoom) room = "commonRoom";
-        if(room.length() > 27) room = room.substring(0,27);
-        if(keyword.length() > 120) keyword = keyword.substring(0,120);
 
-        String reply;
-
-        reply = ifOnOff(room, keyword);
-        if(reply != null) return reply;
-        if(!isOperation.get(room)) return null;
-
-        reply = ifMatchExpletiveKeyword(room,keyword);
-        if(reply != null) return reply;
-
-        reply = ifDeleteKey(room,keyword);
-        if(reply != null) return reply;
-
-        reply = ifShowReplyList(room, keyword);
-        if(reply != null) return reply;
-
-        reply = ifEducateKeyword(room,keyword);
-        if(reply != null) return reply;
-
-        reply = ifApiQuestion(room,keyword,context);
-        if(reply != null) return reply;
-
-        reply = ifContainsKeyword(room,keyword);
-        if(reply != null) return reply;
-
-        return null;
-    }
     public String ifDeleteKey(String room, String keyword){
         if(keyword.startsWith("학습목록삭제") || keyword.startsWith("ㅎㅅㅁㄹㅅㅈ") || keyword.startsWith("ㅎㅅㅁㄽㅈ")) {
             try {
@@ -241,8 +190,6 @@ public class ReplyConstraint {
                 for(DataRoom<String> keyNode : roomNode.dataList)
                     if(keyword.contains(keyNode.label))
                         return keyNode.dataList.get(new Random().nextInt(keyNode.dataList.size()));
-
-        Log.i(TAG, "ifContainsKeyword room/keyword ???: "+room+"/"+keyword);
         return null;
 
     }
@@ -343,6 +290,64 @@ public class ReplyConstraint {
             }
         if(str.contains("학습하기"))
             return t;
+        return null;
+    }
+
+
+    Map<String, String> beforeConsonantGame = new HashMap<String,String>();
+    Map<String, Map<String, Integer> > personAndScore = new HashMap<String, Map<String, Integer> >();
+    ArrayList<String> allQnA =null;
+    public String ifConsonantGame(String sender, String room, String str){
+        Log.i(TAG, "ifConsonantGame");
+
+        String answar = beforeConsonantGame.get(room);
+        if(answar!=null) {
+            if (str.matches(answar)) {
+                if (personAndScore.get(room) == null) {
+                    personAndScore.put(room, new HashMap<String, Integer>());
+                    personAndScore.get(room).put(sender, 1);
+                }
+                else if(personAndScore.get(room).get(sender) == null)
+                    personAndScore.get(room).put(sender, 1);
+                else
+                    personAndScore.get(room).put(sender, personAndScore.get(room).get(sender) + 1);
+                beforeConsonantGame.remove(room);
+                return sender + "님 " + personAndScore.get(room).get(sender) + "점!\n" + answar + " 정답이에요!";
+            }
+            else if (str.contains("포기")) {
+                beforeConsonantGame.remove(room);
+                return "퀴즈를 포기했어요.ㅠ\n정답은 " + answar+"이였어요..\n계속하시려면 [퀴즈]를 외쳐주세요!";
+            }
+            else if(str.contains("힌트")){
+                String question= new ReplyFunction().consonant(answar);
+                String result = "힌트! ";
+                for(int i =0 ; i< answar.length() ; i++)
+                    result += (new Random().nextBoolean() ? question.charAt(i) : answar.charAt(i) );
+                return result;
+            }
+        }
+
+        if(str.contains("퀴즈")) {
+            if(answar != null) return "지난퀴즈 정답자가 없어요.\n주제는 롤! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar);
+            try {
+                String readLine;
+                if(allQnA==null) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("consonantGame_LoL", AssetManager.ACCESS_BUFFER)));
+                    allQnA = new ArrayList<String>();
+                    while (null != (readLine = br.readLine())) allQnA.add(readLine);
+                }
+                readLine = allQnA.get(new Random().nextInt(allQnA.size()));
+                beforeConsonantGame.put(room, readLine);
+                if(str.matches("퀴즈이어가기"))
+                    return "다음 문제에요!\n초성: " + new ReplyFunction().consonant(readLine);
+                else
+                    return str+" 주제는 롤! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(readLine);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         return null;
     }
 
