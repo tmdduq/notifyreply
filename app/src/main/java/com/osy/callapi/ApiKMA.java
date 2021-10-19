@@ -168,9 +168,18 @@ public class ApiKMA {
                 reply.append("습도 " + curWeather[code.FCSTVALUE][code.REH] + "%\n");
                 reply.append("구름량 " + curWeather[code.FCSTVALUE][code.SKY] + "0%\n");
                 reply.append("현재기온 " + curWeather[code.FCSTVALUE][code.TMP] + "˚C\n");
-                reply.append("풍향 " + curWeather[code.FCSTVALUE][code.VEC] + "˚\n");
-                reply.append("풍속 " + curWeather[code.FCSTVALUE][code.WSD] + "m/s\n");
-                reply.append("입니다.^^\n");
+                int direction = Integer.parseInt(curWeather[code.FCSTVALUE][code.VEC]);
+                if(direction<23 || direction>=338) curWeather[code.FCSTVALUE][code.VEC] = "북풍";
+                else if(direction<67 || direction>=23) curWeather[code.FCSTVALUE][code.VEC] = "북동풍";
+                else if(direction<113 || direction>=67) curWeather[code.FCSTVALUE][code.VEC] = "동풍";
+                else if(direction<158 || direction>=113) curWeather[code.FCSTVALUE][code.VEC] = "남동풍";
+                else if(direction<203 || direction>=158) curWeather[code.FCSTVALUE][code.VEC] = "남풍";
+                else if(direction<248 || direction>=203) curWeather[code.FCSTVALUE][code.VEC] = "남서풍";
+                else if(direction<293 || direction>=248) curWeather[code.FCSTVALUE][code.VEC] = "서풍";
+                else if(direction<338 || direction>=293) curWeather[code.FCSTVALUE][code.VEC] = "북서풍";
+                reply.append("바람 " + direction + "˚("+curWeather[code.FCSTVALUE][code.VEC]+") ");
+                reply.append(curWeather[code.FCSTVALUE][code.WSD] + "m/s\n");
+                reply.append("입니다.");
                 //System.out.println(reply.toString());
                 return reply.toString();
             }

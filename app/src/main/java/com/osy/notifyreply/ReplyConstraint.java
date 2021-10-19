@@ -209,6 +209,7 @@ public class ReplyConstraint {
     public String ifApiQuestion(String room, String keyword, Context context){
         Log.i(TAG, "ifApiQuestion room/keyword : "+room+"/"+keyword);
         if(keyword.contains(" 날씨")) {
+            if(keyword.contains("오늘 날씨")) keyword = "연수구 송도1동 날씨";
             String[] addr = keyword.split(" ");
             try {
                 if (addr[2].contains("날씨"))
@@ -307,7 +308,6 @@ public class ReplyConstraint {
     }
 
 
-
     public String ifConsonantGame(String sender, String room, String str){
         Log.i(TAG, "ifConsonantGame");
         String answar = beforeConsonantGame.get(room);
@@ -323,7 +323,8 @@ public class ReplyConstraint {
                 else
                     personAndScore.get(room).put(sender, personAndScore.get(room).get(sender) + 1);
                 beforeConsonantGame.remove(room);
-                return sender + "님 " + personAndScore.get(room).get(sender) + "점!\n" + answar + " 정답이에요!";
+                String displySender = sender.contains("/") ?  sender.substring(0,sender.indexOf("/")) : sender;
+                return displySender + "님 " + personAndScore.get(room).get(sender) + "점!\n" + answar + " 정답이에요!";
             }
             else if (  str.contains("퀴즈") && (str.contains("포기") || str.contains("그만") || str.contains("중지"))) {
                 beforeConsonantGame.remove(room);
@@ -340,12 +341,12 @@ public class ReplyConstraint {
 
         if(str.contains("퀴즈") && str.contains("시작")) {
             if(answar != null)
-                return "지난퀴즈 정답자가 없어요.\n주제는 롤! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar);
+                return "지난퀴즈 정답자가 없어요.\n주제는 롤 스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar);
 
             try {
                 String question;
                 if(allQuestion==null) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("consonantGame_LoL", AssetManager.ACCESS_BUFFER)));
+                    BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("consonantGame_LoL2", AssetManager.ACCESS_BUFFER)));
                     allQuestion = new ArrayList<String>();
                     while (null != (question = br.readLine())) allQuestion.add(question);
                 }
@@ -354,7 +355,7 @@ public class ReplyConstraint {
                 if(str.matches("퀴즈시작이어가기"))
                     return "다음 문제에요!\n초성: " + new ReplyFunction().consonant(question);
                 else
-                    return " 주제는 롤! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(question);
+                    return " 주제 롤스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(question);
             } catch (Exception e) {
                 e.printStackTrace();
             }

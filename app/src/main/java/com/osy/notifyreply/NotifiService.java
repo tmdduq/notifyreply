@@ -75,16 +75,19 @@ public class NotifiService extends NotificationListenerService {
         if(replyMessage!=null && replyMessage.endsWith(" 정답이에요!"))
             try {
                 Thread.sleep(2000);
-                if(new Random().nextInt(10)<2) sendReply(context, act, "와 잘하세요!");
-                if(new Random().nextInt(50)<2) sendReply(context, act, "점수가 궁금하면 [점수 확인]!");
-                if(new Random().nextInt(50)<2) sendReply(context, act, "그만하시려면 [퀴즈중지]!");
+                Random r = new Random();
+                r.setSeed(System.currentTimeMillis());
+                if(r.nextInt(10)<2) sendReply(context, act, "와 잘하세요!");
+                if(r.nextInt(50)<2) sendReply(context, act, "점수가 궁금하면 [점수 확인]!");
+                if(r.nextInt(50)<2) sendReply(context, act, "그만하시려면 [퀴즈중지]!");
+                if(r.nextInt(100)<2)sendReply(context, act, "[명예의전당] ★시즌1★\n" +
+                        "1위 짜와오(+100)\n2위 아리는냐옹냐옹(+95)\n3위 새 글(+45)\n4위 초운보전(+25)\n5위 에펜팡(+22)\n등 30명이 참가하였습니다.");
                 Thread.sleep(2000);
                 replyMessage =  rs.checkKeyword(sender,roomName,"퀴즈시작이어가기");
                 sendReply(context, act, replyMessage);
             }catch (Exception e){
                 e.printStackTrace();
             }
-
 
     }
 
