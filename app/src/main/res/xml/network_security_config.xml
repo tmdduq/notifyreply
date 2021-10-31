@@ -9,6 +9,8 @@
         <domain includeSubdomains="true">api.bithumb.com</domain>
         <domain includeSubdomains="true">stdict.korean.go.kr</domain>
         <domain includeSubdomains="true">trends.google.co.kr</domain>
+        <domain includeSubdomains="true">www.cgv.co.kr</domain>
+
 
 
     </domain-config>

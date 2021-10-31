@@ -56,10 +56,10 @@ public class ApiCorona {
             if(totalCase==0 || totalDeath==0 || totalRecovered ==0 || nowCase==0) return null;
             DecimalFormat df = new DecimalFormat("###,###");
             String t = "코로나 현황입니다.\n" +
-                    "누적 "+df.format(totalCase) +"명\n" +
-                    "완치 "+df.format(totalRecovered) +"명\n" +
-                    "사망 "+df.format(totalDeath) +"명\n" +
-                    "현재 "+df.format(nowCase) +"명\n입니다.";
+                    "총확진자 "+df.format(totalCase) +"명\n" +
+                    "완치자수 "+df.format(totalRecovered) +"명\n" +
+                    "사망자수 "+df.format(totalDeath) +"명\n" +
+                    "현재확진 "+df.format(nowCase) +"명\n입니다.";
             return t;
 
         }catch(Exception e){

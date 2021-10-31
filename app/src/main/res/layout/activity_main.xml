@@ -13,10 +13,11 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="horizontal">
-        <EditText
+        <Spinner
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.2"
+            android:outlineSpotShadowColor="#000"
             android:id="@+id/edit_room"
             android:hint="room"/>
         <EditText
@@ -37,22 +38,47 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="horizontal">
+        <View
+            android:layout_width="50pt"
+            android:background="#00000000"
+            android:layout_weight="2"
+            android:layout_height="match_parent"/>
         <Button
             android:id="@+id/button1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_weight="0.5"
             android:text="ON" />
         <View
             android:layout_width="50pt"
             android:background="#00000000"
+            android:layout_weight="2"
             android:layout_height="match_parent"/>
         <Button
             android:id="@+id/button2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:layout_gravity="center"
+            android:text="ADD" />
+        <View
+            android:layout_width="50pt"
+            android:background="#00000000"
+            android:layout_weight="2"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
             android:layout_gravity="right"
             android:text="set" />
+        <View
+            android:layout_width="50pt"
+            android:background="#00000000"
+            android:layout_weight="2"
+            android:layout_height="match_parent"/>
     </LinearLayout>
     <View
         android:layout_width="match_parent"
