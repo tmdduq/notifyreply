@@ -217,10 +217,10 @@ public class ReplyConstraint {
     }
     public String[] subscriptionDailyNews(String room, String keyword) {
         Log.i(TAG, "subscriptionDailyNews room/keyword : " + room +"/"+keyword);
-        if(!keyword.startsWith("데일리뉴스 구독")) return null;
+        if(!keyword.startsWith("데일리뉴스")) return null;
         String s = dailyNews.get(room);
         Calendar cal = Calendar.getInstance();
-        
+
         if(s==null || keyword.matches("데일리뉴스 구독")) {
             String day = cal.get(Calendar.MONTH)+ "" + cal.get(Calendar.DATE);
             dailyNews.put(room, day);
@@ -230,10 +230,10 @@ public class ReplyConstraint {
             dailyNews.remove(room);
             return new String[]{"아침 뉴스 안할게요!"};
         }
-        else if(keyword.matches("데일리뉴스 구독@!#")){
+        else if(keyword.matches("데일리뉴스 구독@!#") || keyword.contains("데일리뉴스 보기")){
             return new RssNews().getNews();
-
         }
+
         return null;
     }
 
