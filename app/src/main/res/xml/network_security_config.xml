@@ -3,13 +3,16 @@
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">apis.data.go.kr</domain>
-        <domain includeSubdomains="true">api.corona-19.kr</domain>
-        <domain includeSubdomains="true">openapi.molit.go.kr</domain>
-        <domain includeSubdomains="true">openapi.molit.go.kr:8081</domain>
-        <domain includeSubdomains="true">api.bithumb.com</domain>
-        <domain includeSubdomains="true">stdict.korean.go.kr</domain>
-        <domain includeSubdomains="true">trends.google.co.kr</domain>
-        <domain includeSubdomains="true">www.cgv.co.kr</domain>
+        <domain includeSubdomains="true" tag="corona">openapi.data.go.kr</domain>
+        <domain includeSubdomains="true" tag="old_corona">api.corona-19.kr</domain>
+        <domain includeSubdomains="true" tag="house sell info">openapi.molit.go.kr</domain>
+        <domain includeSubdomains="true" tag="house sell info">openapi.molit.go.kr:8081</domain>
+        <domain includeSubdomains="true" tag="coin">api.bithumb.com</domain>
+        <domain includeSubdomains="true" tag="dictionary">stdict.korean.go.kr</domain>
+        <domain includeSubdomains="true" tag="best search keyword">trends.google.co.kr</domain>
+        <domain includeSubdomains="true" tag="CGV movie info">www.cgv.co.kr</domain>
+        <domain includeSubdomains="true" tag="applyhome">openapi.reb.or.kr</domain>
+
 
 
 

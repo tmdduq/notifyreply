@@ -9,6 +9,7 @@ import android.renderscript.ScriptGroup;
 import android.util.Log;
 
 import com.osy.callapi.AnalysCGV;
+import com.osy.callapi.ApiApplyhome;
 import com.osy.callapi.ApiCoin;
 import com.osy.callapi.ApiCorona;
 import com.osy.callapi.ApiDict;
@@ -295,7 +296,9 @@ public class ReplyConstraint {
             return null;
         }
         if(keyword.contains("코로나")){
-            return new String[]{new ApiCorona(context).getNationalCorona()};
+            String re = new ApiCorona(context).getNationalCorona();
+            if(re !=null)
+                return new String[]{new ApiCorona(context).getNationalCorona(),"다들 코로나 조심하세요."};
         }
         if(keyword.contains(" 실거래가")){
             try {
@@ -381,6 +384,10 @@ public class ReplyConstraint {
                 return t;
             }
         }
+        if(keyword.contains("청약")){
+            String t = new ApiApplyhome().getApplyhome();
+            if(t != null) return new String[]{t};
+        }
 
 
         return null;
@@ -415,20 +422,24 @@ public class ReplyConstraint {
         if( !keyword.contains("도움말") || !keyword.contains("봇")) return null;
         String[] t = new String[]{
                 "[1]코로나 현황 확인\n" +
-                        "-> 코로나",
+                        "ex) 코로나",
                 "[2]국어사전 검색\n" +
                         "-> [검색어]가 뭐야",
+                        "ex) 나무가 뭐야",
                 "[3]날씨 확인\n" +
                         "-> 오늘 날씨\n" +
                         "-> [구] [동] 날씨\n" +
                         "ex) 연수구 송도1동 날씨",
                 "[4]인기 검색어 확인\n" +
-                        "-> 실시간 검색어\n" +
-                        "-> 인기 검색어",
+                        "ex) 실시간 검색어\n" +
+                        "ex) 인기 검색어",
                 "[5]타임스페이스CGV 확인\n" +
-                        "-> CGV\n" +
+                        "ex) CGV\n" +
+                        "ex) 내일 CGV\n" +
+                        "ex) 금요일 CGV\n" +
                         "-> CGV [제목] 시간표\n" +
                         "ex) CGV 인셉션 시간표\n" +
+                        "ex) CGV 토요일 인셉션 시간표\n" +
                         "ex) CGV 내일 인셉션 시간표",
                 "[6]실시간 코인 가격\n" +
                         "-> [코인명] 시세\n" +
