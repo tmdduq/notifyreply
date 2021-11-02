@@ -72,6 +72,7 @@ public class ApiSellApart {
             String response = br.readLine();
             response = response.replace("<item>","\n")
                     .replace("</거래금액>","\n")
+                    .replace("</거래유형>","\n")
                     .replace("</건축년도>", "\n")
                     .replace("</년>", "\n")
                     .replace("</법정동>", "\n")
@@ -100,7 +101,7 @@ public class ApiSellApart {
                 else if(readLine.contains("<아파트"))
                     sb.append(readLine.substring(readLine.indexOf(">")+1).trim()+ "\n");
                 else if(readLine.contains("<월"))
-                    sb.append("거래날자: "+readLine.substring(readLine.indexOf(">")+1).trim()+ "월");
+                    sb.append("거래날짜: "+readLine.substring(readLine.indexOf(">")+1).trim()+ "월");
                 else if(readLine.contains("<일"))
                     sb.append(readLine.substring(readLine.indexOf(">")+1).trim()+ "일\n");
                 else if(readLine.contains("<전용면적"))

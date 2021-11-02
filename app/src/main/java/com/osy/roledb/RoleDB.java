@@ -85,7 +85,7 @@ public class RoleDB extends SQLiteOpenHelper {
     public boolean deleteContainKey(String room, int num){
         try {
             SQLiteDatabase db = getReadableDatabase();
-            String qry = "delete from " + table_containKeyword + " where room= '" + room + "' and num = " + num + ";";
+            String qry = "delete from " + table_containKeyword + " where num = " + num + ";";
             db.execSQL(qry);
             return true;
         }catch(Exception e){
@@ -99,7 +99,8 @@ public class RoleDB extends SQLiteOpenHelper {
         SQLiteDatabase db = getReadableDatabase();
         String qry;
         if(room==null)
-            qry = "select room,ky,value,num from "+ table_containKeyword + " order by kylength desc;";
+            //qry = "select room,ky,value,num from "+ table_containKeyword + " order by kylength desc;";
+            qry = "select room,ky,value,num from "+ table_containKeyword + " order by num asc;";
         else
             qry = "select room,ky,value,num from "+ table_containKeyword + " where room='"+room+"' order by num asc;";
         Cursor cursor = db.rawQuery(qry,null);

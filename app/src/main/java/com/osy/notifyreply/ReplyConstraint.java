@@ -384,8 +384,12 @@ public class ReplyConstraint {
                 return t;
             }
         }
-        if(keyword.contains("청약")){
-            String t = new ApiApplyhome().getApplyhome();
+        if(keyword.contains("청약") && (keyword.contains("정보")|| keyword.contains("접수"))){
+            int rank=1;
+            if(keyword.contains("특")) rank =0;
+            else if(keyword.contains("2")) rank =2;
+
+            String t = new ApiApplyhome().getApplyhome(rank);
             if(t != null) return new String[]{t};
         }
 
@@ -420,20 +424,21 @@ public class ReplyConstraint {
     public String[] specialKeyword(String keyword){
         Log.i(TAG, "specialKeyword keyword : " +"/"+keyword);
         if( !keyword.contains("도움말") || !keyword.contains("봇")) return null;
+        int seq = 1;
         String[] t = new String[]{
-                "[1]코로나 현황 확인\n" +
+                seq+++">코로나 현황 확인\n" +
                         "ex) 코로나",
-                "[2]국어사전 검색\n" +
-                        "-> [검색어]가 뭐야",
+                seq+++">국어사전 검색\n" +
+                        "-> [검색어]가 뭐야" +
                         "ex) 나무가 뭐야",
-                "[3]날씨 확인\n" +
+                seq+++">날씨 확인\n" +
                         "-> 오늘 날씨\n" +
                         "-> [구] [동] 날씨\n" +
                         "ex) 연수구 송도1동 날씨",
-                "[4]인기 검색어 확인\n" +
+                seq+++">인기 검색어 확인\n" +
                         "ex) 실시간 검색어\n" +
                         "ex) 인기 검색어",
-                "[5]타임스페이스CGV 확인\n" +
+                seq+++">타임스페이스CGV 확인\n" +
                         "ex) CGV\n" +
                         "ex) 내일 CGV\n" +
                         "ex) 금요일 CGV\n" +
@@ -441,30 +446,38 @@ public class ReplyConstraint {
                         "ex) CGV 인셉션 시간표\n" +
                         "ex) CGV 토요일 인셉션 시간표\n" +
                         "ex) CGV 내일 인셉션 시간표",
-                "[6]실시간 코인 가격\n" +
+                seq+++">실시간 코인 가격\n" +
                         "-> [코인명] 시세\n" +
-                        "ex) 이더리움 시세\n" +
                         "-> [코인약어] 시세\n" +
+                        "ex) 이더리움 시세\n" +
                         "ex) ETH 시세\n" +
-                        "-> 모든코인 시세",
-                "[6]매일 아침 뉴스 받기\n" +
-                        "-> 데일리뉴스 구독\n" +
-                        "-> 데일리뉴스 구독 취소",
-                "[7]롤 초성퀴즈 풀기\n" +
-                        "-> 퀴즈 시작\n" +
-                        "-> 퀴즈 중지\n" +
-                        "-> 힌트",
-                "[8]부동산 실거래가 확인\n" +
+                        "ex) 모든코인 시세",
+                seq+++">뉴스 확인\n" +
+                        "ex) 데일리뉴스 보기\n" +
+                        "ex) 데일리뉴스 구독\n" +
+                        "ex) 데일리뉴스 구독 취소",
+                seq+++">롤 초성퀴즈 풀기\n" +
+                        "ex) 퀴즈 시작\n" +
+                        "ex) 퀴즈 중지\n" +
+                        "ex) 힌트",
+                seq+++">부동산 실거래가 확인\n" +
                         "-> [시] [구] 실거래가\n" +
                         "ex) 인천광역시 연수구 실거래가",
-                "[9]로또번호 추천\n" +
-                        "-> 로또 추천",
-                "[10]말 가르치기\n" +
+                seq+++">청약 정보 확인\n" +
+                        "ex) 청약정보\n" +
+                        "ex) 청약정보 특별공급\n" +
+                        "ex) 청약정보 2순위",
+                seq+++">로또번호 추천\n" +
+                        "ex) 로또 추천",
+                seq+++">말 가르치기\n" +
                         "-> 학습하기+[키워드]+[대답]\n" +
                         "ex) 학습하기+배고파+밥먹어라",
-                "[11]학습한 내용보기/삭제\n" +
+                seq+++">학습한 내용보기/삭제\n" +
                         "-> 학습목록보기\n" +
-                        "-> 학습목록삭제 39"
+                        "-> 학습목록삭제 39",
+                seq+++">봇 멈추기/재시작\n" +
+                        "-> 이제 그만\n" +
+                        "-> 다시 작동"
         };
 
         return t;
