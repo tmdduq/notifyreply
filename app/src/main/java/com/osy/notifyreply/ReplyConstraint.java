@@ -39,14 +39,11 @@ public class ReplyConstraint {
     protected Map<String, Boolean> isOperation;
     ArrayList<DataRoom<DataRoom<String>>> roomNodes;
 
-    Map<String, String> dailyNews;
-    Map<String, String> beforeConsonantGame;
+    Map<String, String> topicChecker;
     Map<String, Map<String, Integer> > personAndScore;
-    ArrayList<String> allQuestion;
 
     public static ReplyConstraint getInstance(){
-        if(instance ==null)
-            instance = new ReplyConstraint();
+        if(instance ==null) instance = new ReplyConstraint();
         return instance;
     }
     public void setContext(Context context){
@@ -56,10 +53,8 @@ public class ReplyConstraint {
 
     ReplyConstraint() {
         isOperation = new HashMap<String, Boolean>();
-        dailyNews = new HashMap<String,String>();
-        beforeConsonantGame = new HashMap<String,String>();
+        topicChecker = new HashMap<String,String>();
         personAndScore = new HashMap<String, Map<String, Integer> >();
-        allQuestion =null;
     }
 
     public String[] checkKeyword(String sender, String room, String keyword){
@@ -218,23 +213,25 @@ public class ReplyConstraint {
     }
     public String[] subscriptionDailyNews(String room, String keyword) {
         Log.i(TAG, "subscriptionDailyNews room/keyword : " + room +"/"+keyword);
-        if(!keyword.startsWith("데일리뉴스")) return null;
-        String s = dailyNews.get(room);
+        if(!keyword.startsWith("뉴스")) return null;
         Calendar cal = Calendar.getInstance();
 
-        if(s==null || keyword.matches("데일리뉴스 구독")) {
+        if(keyword.matches("뉴스 구독")) {
             String day = cal.get(Calendar.MONTH)+ "" + cal.get(Calendar.DATE);
-            dailyNews.put(room, day);
+            topicChecker.put("subscriptionDailyNews"+room, day);
             return new String[]{"매일 아침 뉴스를 보내드려요!"};
         }
         if(keyword.endsWith("취소")){
-            dailyNews.remove(room);
+            topicChecker.remove("subscriptionDailyNews"+room);
             return new String[]{"아침 뉴스 안할게요!"};
         }
-        else if(keyword.matches("데일리뉴스 구독@!#") || keyword.contains("데일리뉴스 보기")){
-            return new RssNews().getNews();
+        else if(keyword.contains("보기")){
+            if(keyword.contains("연합")) return new RssNews().getNews(RssNews.YONHAP);
+            if(keyword.contains("중앙")) return new RssNews().getNews(RssNews.JOONGANG);
+            if(keyword.contains("JTBC") || keyword.contains("jtbc")) return new RssNews().getNews(RssNews.JTBC);
+            if(keyword.contains("연합")) return new RssNews().getNews(RssNews.SBS);
+            return new RssNews().getNews(new Random().nextInt(4));
         }
-
         return null;
     }
 
@@ -295,7 +292,7 @@ public class ReplyConstraint {
             }
             return null;
         }
-        if(keyword.contains("코로나")){
+        if(keyword.contains("코로나") && ( keyword.contains("확진") || keyword.contains("현재") || keyword.contains("현황") ||keyword.contains("명"))){
             String re = new ApiCorona(context).getNationalCorona();
             if(re !=null)
                 return new String[]{new ApiCorona(context).getNationalCorona(),"다들 코로나 조심하세요."};
@@ -327,8 +324,7 @@ public class ReplyConstraint {
                     t = "코인 시세가 궁금하면 아래와 같이 검색해보세요!\n" +
                             "[코인이름] 시세\n" +
                             "예시1)이더리움 클래식 시세\n" +
-                            "예시2)ETH 시세\n" +
-                            "예시3)모든코인 시세";
+                            "예시2)ETH 시세\n";
                 }
                 return new String[]{t};
             }catch (Exception e){
@@ -424,6 +420,11 @@ public class ReplyConstraint {
     public String[] specialKeyword(String keyword){
         Log.i(TAG, "specialKeyword keyword : " +"/"+keyword);
         if( !keyword.contains("도움말") || !keyword.contains("봇")) return null;
+
+        if(keyword.contains("11")){
+            Log.i(TAG, "@@@@@@@@@@"+roleDB.getTableSize("consonantQuiz_lol"));
+            return null;
+        }
         int seq = 1;
         String[] t = new String[]{
                 seq+++">코로나 현황 확인\n" +
@@ -485,7 +486,9 @@ public class ReplyConstraint {
 
     public String[] ifConsonantGame(String sender, String room, String str){
         Log.i(TAG, "ifConsonantGame room/keyword : "+room+"/"+str);
-        String answar = beforeConsonantGame.get(room);
+        String mapTopic = "beforeConsonantGame"+room;
+        String quizName = "consonantQuiz_lol";
+        String answar = topicChecker.get(mapTopic);
 
         if(answar!=null) {
             if (str.matches(answar)) { // SCORE +
@@ -497,12 +500,25 @@ public class ReplyConstraint {
                     personAndScore.get(room).put(sender, 1);
                 else
                     personAndScore.get(room).put(sender, personAndScore.get(room).get(sender) + 1);
-                beforeConsonantGame.remove(room);
+                topicChecker.remove(mapTopic);
                 String displySender = sender.contains("/") ?  sender.substring(0,sender.indexOf("/")) : sender;
-                return new String[]{displySender + "님 " + personAndScore.get(room).get(sender) + "점!\n" + answar + " 정답이에요!"};
+
+                String question = roleDB.getConsonantQuestion(quizName);
+                topicChecker.put(mapTopic, question );
+                ArrayList<String> reply = new ArrayList<>();
+                Random r = new Random();
+                r.setSeed(System.currentTimeMillis());
+                reply.add(displySender + "님 " + personAndScore.get(room).get(sender) + "점!\n" + answar + " 정답이에요!");
+                if (r.nextInt(10) < 2) reply.add("와 잘하세요!");
+                if (r.nextInt(50) < 2) reply.add("점수가 궁금하면 [점수 확인]!");
+                if (r.nextInt(50) < 2) reply.add("그만하시려면 [퀴즈중지]!");
+                reply.add("다음 문제에요!\n초성: " + new ReplyFunction().consonant(question));
+                String[] t = new String[reply.size()];
+                reply.toArray(t);
+                return t;
             }
             else if (  str.contains("퀴즈") && (str.contains("포기") || str.contains("그만") || str.contains("중지"))) {
-                beforeConsonantGame.remove(room);
+                topicChecker.remove(mapTopic);
                 return new String[]{"퀴즈를 포기했어요.ㅠ\n정답은 " + answar+"이였어요..\n계속하려면 [퀴즈시작]를 외쳐주세요!"};
             }
             else if(str.contains("힌트")){
@@ -517,24 +533,11 @@ public class ReplyConstraint {
         if(str.contains("퀴즈") && str.contains("시작")) {
             if(answar != null)
                 return new String[]{"지난퀴즈 정답자가 없어요.\n주제는 롤 스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar)};
-
-            try {
-                String question;
-                if(allQuestion==null) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open("consonantGame_LoL2", AssetManager.ACCESS_BUFFER)));
-                    allQuestion = new ArrayList<String>();
-                    while (null != (question = br.readLine())) allQuestion.add(question);
-                }
-                question = allQuestion.get(new Random().nextInt(allQuestion.size()));
-                beforeConsonantGame.put(room, question);
-                if(str.matches("퀴즈시작이어가기"))
-                    return new String[]{"다음 문제에요!\n초성: " + new ReplyFunction().consonant(question)};
-                else
-                    return new String[]{" 주제 롤스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(question)};
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            String question = roleDB.getConsonantQuestion(quizName);
+            topicChecker.put(mapTopic, question);
+            return new String[]{" 주제 롤스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(question)};
         }
+
         if(str.contains("점수") && (str.contains("확인") || str.contains("보기")) ){
             StringBuilder sb = new StringBuilder("");
             Map<String, Integer> m = personAndScore.get(room);
@@ -553,9 +556,9 @@ public class ReplyConstraint {
 
         if(str.contains("문제추가 ")) {
             try {
-                allQuestion.add(str.substring(5));
-                return new String[]{str.substring(5) + new ReplyFunction().consonant(str.substring(5)) + " 추가했어요\n" +
-                        "문제는 총 "+allQuestion.size()+"개에요."};
+                roleDB.putConsonantQuestion(quizName, str.substring(5));
+                return new String[]{new ReplyFunction().consonant(str.substring(5)) + " 추가했어요\n" +
+                        "문제는 총 "+roleDB.getTableSize(quizName)+"개에요."};
             }catch (Exception e){ }
         }
 

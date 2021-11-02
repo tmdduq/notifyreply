@@ -1,6 +1,7 @@
 package com.osy.roledb;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -8,10 +9,16 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Random;
+
 public class RoleDB extends SQLiteOpenHelper {
     final String TAG = "RoleDB";
     String table_containKeyword = "table_containKeyword";
-    String table_matchKeyword = "table_matchKeyword";
+    String consonantQuiz_lol_skin = "consonantQuiz_lol_skin";
+    String consonantQuiz_lol = "consonantQuiz_lol";
     Context context;
     SQLiteDatabase db;
 
@@ -31,28 +38,18 @@ public class RoleDB extends SQLiteOpenHelper {
                 "value varchar(100) not null);";
         db.execSQL(qry);
         initializeContainRole();
-
-        qry = "create table "+table_matchKeyword+"(" +
-                "num integer primary key autoincrement," +
-                "room varchar(30) not null," +
-                "ky varchar(20) not null," +
-                "kylength integer not null," +
-                "value varchar(100) not null);";
-        db.execSQL(qry);
-
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + table_containKeyword);
-        db.execSQL("DROP TABLE IF EXISTS " + table_matchKeyword);
         onCreate(db);
     }
 
     final void initializeContainRole(){
         String qry = "insert into "+table_containKeyword + "(room, ky, kylength, value) values" +
-                "('ㅇㅅㅇ',    '안녕',    2,   '안녕하세요?')," +
-                "('ㅇㅅㅇ',    '히오스',  3,'시공쪼아')";
+                "('룸이름',    '(키워드)안녕',    2,   '(대답)안녕하세요?')," +
+                "('ㄹㅇㄹ',    'ㅇㄴ',  3,'ㅇㄴㅎㅅㅇ?')";
         db.execSQL(qry);
     }
 
@@ -92,7 +89,6 @@ public class RoleDB extends SQLiteOpenHelper {
             e.printStackTrace();
             return false;
         }
-
     }
 
     public Cursor getContainsKeyList(String room){
@@ -106,13 +102,66 @@ public class RoleDB extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(qry,null);
         return cursor;
     }
-    public Cursor getMatchKeyList(){
-        SQLiteDatabase db = getReadableDatabase();
-        String qry;
-        qry = "select value from "+ table_matchKeyword + ";";
 
-        Cursor cursor = db.rawQuery(qry,null);
-        return cursor;
+    public boolean createConsonantQuiz(String fileNameInAsset, String tableNaming){
+        try {
+            SQLiteDatabase db = getReadableDatabase();
+
+            String deleteValues = "drop table if exists "+tableNaming+";";
+            db.execSQL(deleteValues);
+
+            String createTable = "create table if not exists "+tableNaming+"(" +
+                    "num integer primary key autoincrement," +
+                    "value varchar(100) not null);";
+            db.execSQL(createTable);
+
+            ///////////////////////////////////
+            BufferedReader br = new BufferedReader(new InputStreamReader(context.getAssets().open(fileNameInAsset, AssetManager.ACCESS_BUFFER)));
+            StringBuilder qry = new StringBuilder("insert into " + tableNaming + "(value) values");
+            String keyword = null;
+            while (null != (keyword = br.readLine())){
+                if(keyword.trim().matches("")) break;
+                qry.append("('"+keyword+ "'),");
+            }
+            qry.deleteCharAt(qry.length()-1);
+            db.execSQL(qry.toString());
+
+            viewConsonantQuizList(tableNaming);
+            return true;
+        }catch(Exception e){e.printStackTrace();}
+        return false;
     }
+    public void viewConsonantQuizList(String tableName){
+        String checkValues = "select * from "+ tableName + " order by num asc;";
+        Cursor cursor = db.rawQuery(checkValues,null);
+        while(cursor.moveToNext()) {
+            String num = cursor.getString(0);
+            String value = cursor.getString(1);
+            Log.i(TAG, "QUIZ(n/v): " + num + "/" + value);
+        }
+    }
+    public int getTableSize(String tableName){
+        SQLiteDatabase db = getReadableDatabase();
+        String qry = "select * from "+ tableName +";";
+        Cursor cursor = db.rawQuery(qry,null);
+        return cursor.getCount();
+    }
+    public String getConsonantQuestion(String tableName){
+        SQLiteDatabase db = getReadableDatabase();
+        int size = getTableSize(tableName);
+        Random r = new Random();
+        r.setSeed(System.currentTimeMillis());
+        String qry = "select value from "+ tableName +" where num= "+ (r.nextInt(size)+1) + ";";
+        Cursor cursor = db.rawQuery(qry,null);
+        cursor.moveToNext();
+        return cursor.getString(0);
+    }
+    public boolean putConsonantQuestion(String tableName, String keyword) {
+        SQLiteDatabase db = getReadableDatabase();
+        String qry = "insert into "+ tableName +"(value) values('"+ keyword + "');";
+        db.execSQL(qry);
+        return true;
+    }
+
 
 }

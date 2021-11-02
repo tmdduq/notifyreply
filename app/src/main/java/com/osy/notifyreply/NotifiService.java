@@ -59,6 +59,7 @@ public class NotifiService extends NotificationListenerService {
         rs = ReplyConstraint.getInstance();
         rs.setContext(this);
 
+
         //Share MainActivity
         String sender = notification.extras.getString("android.title");
         String roomName = notification.extras.getString("android.subText");
@@ -69,40 +70,33 @@ public class NotifiService extends NotificationListenerService {
         intent.putExtra("message", message);
         sendBroadcast(intent);
 
+        String lk = rs.topicChecker.get("subscriptionDailyNews"+roomName);
+        if(lk!=null)
+            try{
+                Calendar cal = Calendar.getInstance();
+                String day = cal.get(Calendar.MONTH)+""+(cal.get(Calendar.DATE));
+                if(cal.get(Calendar.HOUR_OF_DAY) <= 8)
+                if(cal.get(Calendar.HOUR_OF_DAY) >= 7)
+                if(!lk.matches(day)) {
+                    rs.topicChecker.replace("subscriptionDailyNews" + roomName, day);
+                    sendReply(context, act, "오늘아침 주요뉴스!");
+                    sendReply(context, act, rs.subscriptionDailyNews(roomName, "데일리뉴스 보기"));
+                }
+            }catch(Exception e){
+                e.printStackTrace();
+            };
+
+
         try {
             String[] replyMessage = rs.checkKeyword(sender, roomName, message);
             if(replyMessage==null) return;
             sendReply(context, act, replyMessage);
 
-        if(replyMessage[0]!=null && replyMessage[0].endsWith(" 정답이에요!")) {
-            Thread.sleep(2000);
-            Random r = new Random();
-            r.setSeed(System.currentTimeMillis());
-            if (r.nextInt(10) < 2) sendReply(context, act, "와 잘하세요!");
-            if (r.nextInt(50) < 2) sendReply(context, act, "점수가 궁금하면 [점수 확인]!");
-            if (r.nextInt(50) < 2) sendReply(context, act, "그만하시려면 [퀴즈중지]!");
-            Thread.sleep(2000);
-            replyMessage = rs.checkKeyword(sender, roomName, "퀴즈시작이어가기");
-            sendReply(context, act, replyMessage);
-        }
             }catch (Exception e){
                 e.printStackTrace();
             }
 
-        String lk = rs.dailyNews.get(roomName);
-        if(lk!=null)
-            try{
-                Calendar cal = Calendar.getInstance();
-                String day = cal.get(Calendar.MONTH)+""+(cal.get(Calendar.DATE));
-                if(cal.get(Calendar.HOUR_OF_DAY) > 8) return;
-                if(cal.get(Calendar.HOUR_OF_DAY) < 7) return;
-                if(lk.matches(day)) return;
-                rs.dailyNews.replace(roomName,day);
-                sendReply(context, act, "오늘아침 주요뉴스!");
-                sendReply(context, act, rs.subscriptionDailyNews(roomName,"데일리뉴스 구독@!#"));
-            }catch(Exception e){
-                e.printStackTrace();
-            };
+
 
     }
 
