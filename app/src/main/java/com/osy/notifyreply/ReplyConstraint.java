@@ -200,6 +200,7 @@ public class ReplyConstraint {
         Log.i(TAG, "ifOnOff room/keyword : " + room +"/"+keyword);
         if(isOperation.get(room)==null){
             roomNodes = new ReplyFunction().setKeyList(roomNodes, room,"안녕","안녕하세요");
+            roomNodes = new ReplyFunction().setKeyList(roomNodes, room,"하이","하이하이^-^");
         }
         if(keyword.matches("이제그만") && isOperation.get(room)) {
             isOperation.replace(room,false);
@@ -315,17 +316,14 @@ public class ReplyConstraint {
             try{
                 String coinName = keyword.substring(0, keyword.indexOf("시세")).trim();
                 String t;
-                if(coinName.matches("모든코인"))
-                    t = new ApiCoin().getAllPrice();
+                if((coinName.contains("모든") || coinName.contains("전체")) && coinName.contains("업비트"))
+                    t = new ApiCoin().getAllPrice_UPBIT();
+                else if((coinName.contains("모든") || coinName.contains("전체"))&& ( coinName.contains("빗썸") ||coinName.contains("빗섬")) )
+                    t = new ApiCoin().getAllPrice_BITHUMB();
                 else
                     t = new ApiCoin().getPrice(coinName);
 
-                if(t==null && keyword.contains("코인")){
-                    t = "코인 시세가 궁금하면 아래와 같이 검색해보세요!\n" +
-                            "[코인이름] 시세\n" +
-                            "예시1)이더리움 클래식 시세\n" +
-                            "예시2)ETH 시세\n";
-                }
+                if(t==null) return null;
                 return new String[]{t};
             }catch (Exception e){
                 e.printStackTrace();
@@ -449,10 +447,9 @@ public class ReplyConstraint {
                         "ex) CGV 내일 인셉션 시간표",
                 seq+++">실시간 코인 가격\n" +
                         "-> [코인명] 시세\n" +
-                        "-> [코인약어] 시세\n" +
                         "ex) 이더리움 시세\n" +
                         "ex) ETH 시세\n" +
-                        "ex) 모든코인 시세",
+                        "ex) 업비트 전체 시세",
                 seq+++">뉴스 확인\n" +
                         "ex) 데일리뉴스 보기\n" +
                         "ex) 데일리뉴스 구독\n" +
@@ -486,14 +483,15 @@ public class ReplyConstraint {
 
     public String[] ifConsonantGame(String sender, String room, String str){
         Log.i(TAG, "ifConsonantGame room/keyword : "+room+"/"+str);
+        int quizNameIndex = 0;
+        String[] quizName = new String[]{"consonantQuiz_lol", "consonantQuiz_lol_skin"};
         String mapTopic = "beforeConsonantGame"+room;
-        String quizName = "consonantQuiz_lol";
         String answar = topicChecker.get(mapTopic);
 
         if(answar!=null) {
             if (str.matches(answar)) { // SCORE +
                 if (personAndScore.get(room) == null) {
-                    personAndScore.put(room, new HashMap<String, Integer>() );
+                    personAndScore.put(room, new HashMap<>() );
                     personAndScore.get(room).put(sender, 1);
                 }
                 else if(personAndScore.get(room).get(sender) == null)
@@ -503,7 +501,7 @@ public class ReplyConstraint {
                 topicChecker.remove(mapTopic);
                 String displySender = sender.contains("/") ?  sender.substring(0,sender.indexOf("/")) : sender;
 
-                String question = roleDB.getConsonantQuestion(quizName);
+                String question = roleDB.getConsonantQuestion(quizName[quizNameIndex]);
                 topicChecker.put(mapTopic, question );
                 ArrayList<String> reply = new ArrayList<>();
                 Random r = new Random();
@@ -512,6 +510,7 @@ public class ReplyConstraint {
                 if (r.nextInt(10) < 2) reply.add("와 잘하세요!");
                 if (r.nextInt(50) < 2) reply.add("점수가 궁금하면 [점수 확인]!");
                 if (r.nextInt(50) < 2) reply.add("그만하시려면 [퀴즈중지]!");
+                if (r.nextInt(200) < 2) reply.add("문제를 추가하고 싶으세요?\n다음과 같이 적어보세요!\n ex)문제추가 도레미파솔");
                 reply.add("다음 문제에요!\n초성: " + new ReplyFunction().consonant(question));
                 String[] t = new String[reply.size()];
                 reply.toArray(t);
@@ -533,9 +532,15 @@ public class ReplyConstraint {
         if(str.contains("퀴즈") && str.contains("시작")) {
             if(answar != null)
                 return new String[]{"지난퀴즈 정답자가 없어요.\n주제는 롤 스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar)};
-            String question = roleDB.getConsonantQuestion(quizName);
+            String question = roleDB.getConsonantQuestion(quizName[quizNameIndex]);
             topicChecker.put(mapTopic, question);
-            return new String[]{" 주제 롤스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(question)};
+
+            StringBuilder sb = new StringBuilder("주제는 [");
+            if(quizNameIndex==0) sb.append("롤 관련");
+            else if(quizNameIndex==1) sb.append("롤 스킨");
+            sb.append("]! 맞춰보세요!\n");
+            sb.append("초성"+ new ReplyFunction().consonant(question));
+            return new String[]{sb.toString()};
         }
 
         if(str.contains("점수") && (str.contains("확인") || str.contains("보기")) ){
@@ -548,22 +553,22 @@ public class ReplyConstraint {
                 Map.Entry<String, Integer> v = list.get( list.size()-1-i );
                 String person = v.getKey().length()>4 ? (v.getKey().substring(0,4)+"..") : v.getKey();
                 sb.append((i+1)+"위 "+person + "님 (+" + v.getValue() + ")\n");
-                if(i==4){ break;}
+                if(i==4) break;
             }
             sb.append("정답자는 총 "+list.size()+"명이에요.");
             return new String[]{sb.toString()};
         }
 
-        if(str.contains("문제추가 ")) {
+        if(str.startsWith("문제추가 ")) {
             try {
-                roleDB.putConsonantQuestion(quizName, str.substring(5));
+                roleDB.putConsonantQuestion(quizName[quizNameIndex], str.substring(5));
                 return new String[]{new ReplyFunction().consonant(str.substring(5)) + " 추가했어요\n" +
-                        "문제는 총 "+roleDB.getTableSize(quizName)+"개에요."};
-            }catch (Exception e){ }
+                        "문제는 총 "+roleDB.getTableSize(quizName[quizNameIndex])+"개에요."};
+            }catch (Exception e){e.printStackTrace(); }
         }
 
-
         return null;
+
     }
 
 

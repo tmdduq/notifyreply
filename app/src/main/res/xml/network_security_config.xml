@@ -7,13 +7,12 @@
         <domain includeSubdomains="true" tag="old_corona">api.corona-19.kr</domain>
         <domain includeSubdomains="true" tag="house sell info">openapi.molit.go.kr</domain>
         <domain includeSubdomains="true" tag="house sell info">openapi.molit.go.kr:8081</domain>
+        <domain includeSubdomains="true" tag="coin">api.upbit.com</domain>
         <domain includeSubdomains="true" tag="coin">api.bithumb.com</domain>
         <domain includeSubdomains="true" tag="dictionary">stdict.korean.go.kr</domain>
         <domain includeSubdomains="true" tag="best search keyword">trends.google.co.kr</domain>
         <domain includeSubdomains="true" tag="CGV movie info">www.cgv.co.kr</domain>
         <domain includeSubdomains="true" tag="applyhome">openapi.reb.or.kr</domain>
-
-
 
 
     </domain-config>
