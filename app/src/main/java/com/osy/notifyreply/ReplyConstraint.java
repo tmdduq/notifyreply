@@ -1,5 +1,6 @@
 package com.osy.notifyreply;
 
+import android.app.Notification;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
@@ -19,6 +20,7 @@ import com.osy.callapi.RssNews;
 import com.osy.callapi.RssTopSearch;
 import com.osy.roledb.RoleDB;
 import com.osy.utility.DataRoom;
+import com.osy.utility.LastTalk;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -38,6 +40,8 @@ public class ReplyConstraint {
     private RoleDB roleDB=null;
     protected Map<String, Boolean> isOperation;
     ArrayList<DataRoom<DataRoom<String>>> roomNodes;
+
+    public Map<String, LastTalk> lt = new HashMap<>();
 
     Map<String, String> topicChecker;
     Map<String, Map<String, Integer> > personAndScore;
@@ -420,7 +424,8 @@ public class ReplyConstraint {
         if( !keyword.contains("도움말") || !keyword.contains("봇")) return null;
 
         if(keyword.contains("11")){
-            Log.i(TAG, "@@@@@@@@@@"+roleDB.getTableSize("consonantQuiz_lol"));
+//            Log.i(TAG, "@@@@@@@@@@"+roleDB.createConsonantQuiz("consonantGame_Drama",roleDB.consonantQuiz_Drama));
+//            Log.i(TAG, "@@@@@@@@@@"+roleDB.createConsonantQuiz("consonantGame_Movie",roleDB.consonantQuiz_Movie));
             return null;
         }
         int seq = 1;
@@ -483,10 +488,12 @@ public class ReplyConstraint {
 
     public String[] ifConsonantGame(String sender, String room, String str){
         Log.i(TAG, "ifConsonantGame room/keyword : "+room+"/"+str);
-        int quizNameIndex = 0;
-        String[] quizName = new String[]{"consonantQuiz_lol", "consonantQuiz_lol_skin"};
-        String mapTopic = "beforeConsonantGame"+room;
-        String answar = topicChecker.get(mapTopic);
+        String[] quizName = new String[]{"consonantQuiz_lol", "consonantQuiz_lol_skin","consonantQuiz_Drama", "consonantQuiz_Nation","consonantQuiz_Movie"};
+
+        String quizRoom = "beforeConsonantGame"+room;
+        String quizRoomType = quizRoom+"type";
+
+        String answar = topicChecker.get(quizRoom);
 
         if(answar!=null) {
             if (str.matches(answar)) { // SCORE +
@@ -498,11 +505,11 @@ public class ReplyConstraint {
                     personAndScore.get(room).put(sender, 1);
                 else
                     personAndScore.get(room).put(sender, personAndScore.get(room).get(sender) + 1);
-                topicChecker.remove(mapTopic);
+                topicChecker.remove(quizRoom);
                 String displySender = sender.contains("/") ?  sender.substring(0,sender.indexOf("/")) : sender;
 
-                String question = roleDB.getConsonantQuestion(quizName[quizNameIndex]);
-                topicChecker.put(mapTopic, question );
+                String question = roleDB.getConsonantQuestion(topicChecker.get(quizRoomType));
+                topicChecker.put(quizRoom, question );
                 ArrayList<String> reply = new ArrayList<>();
                 Random r = new Random();
                 r.setSeed(System.currentTimeMillis());
@@ -517,7 +524,7 @@ public class ReplyConstraint {
                 return t;
             }
             else if (  str.contains("퀴즈") && (str.contains("포기") || str.contains("그만") || str.contains("중지"))) {
-                topicChecker.remove(mapTopic);
+                topicChecker.remove(quizRoom);
                 return new String[]{"퀴즈를 포기했어요.ㅠ\n정답은 " + answar+"이였어요..\n계속하려면 [퀴즈시작]를 외쳐주세요!"};
             }
             else if(str.contains("힌트")){
@@ -532,12 +539,16 @@ public class ReplyConstraint {
         if(str.contains("퀴즈") && str.contains("시작")) {
             if(answar != null)
                 return new String[]{"지난퀴즈 정답자가 없어요.\n주제는 롤 스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar)};
-            String question = roleDB.getConsonantQuestion(quizName[quizNameIndex]);
-            topicChecker.put(mapTopic, question);
 
+            topicChecker.put(quizRoomType, quizName[new Random().nextInt(quizName.length)] );   // 퀴즈주제 랜덤지정
+            String question = roleDB.getConsonantQuestion(topicChecker.get(quizRoomType));  //퀴즈 랜덤 추출
+            topicChecker.put(quizRoom, question);   // 해당 채팅방에 퀴즈 등록
             StringBuilder sb = new StringBuilder("주제는 [");
-            if(quizNameIndex==0) sb.append("롤 관련");
-            else if(quizNameIndex==1) sb.append("롤 스킨");
+            if(topicChecker.get(quizRoomType)=="consonantQuiz_lol") sb.append("롤 관련");
+            else if(topicChecker.get(quizRoomType)=="consonantQuiz_lol_skin") sb.append("롤 스킨");
+            else if(topicChecker.get(quizRoomType)=="consonantQuiz_Drama") sb.append("드라마 제목");
+            else if(topicChecker.get(quizRoomType)=="consonantQuiz_Nation") sb.append("나라 이름");
+            else if(topicChecker.get(quizRoomType)=="consonantQuiz_Movie") sb.append("영화 제목");
             sb.append("]! 맞춰보세요!\n");
             sb.append("초성"+ new ReplyFunction().consonant(question));
             return new String[]{sb.toString()};
@@ -561,9 +572,9 @@ public class ReplyConstraint {
 
         if(str.startsWith("문제추가 ")) {
             try {
-                roleDB.putConsonantQuestion(quizName[quizNameIndex], str.substring(5));
+                roleDB.putConsonantQuestion(topicChecker.get(quizRoomType), str.substring(5));
                 return new String[]{new ReplyFunction().consonant(str.substring(5)) + " 추가했어요\n" +
-                        "문제는 총 "+roleDB.getTableSize(quizName[quizNameIndex])+"개에요."};
+                        "문제는 총 "+roleDB.getTableSize(topicChecker.get(quizRoomType))+"개에요."};
             }catch (Exception e){e.printStackTrace(); }
         }
 

@@ -44,7 +44,7 @@
             android:layout_weight="2"
             android:layout_height="match_parent"/>
         <Button
-            android:id="@+id/button1"
+            android:id="@+id/button1_on"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -56,7 +56,7 @@
             android:layout_weight="2"
             android:layout_height="match_parent"/>
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/button2_add"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
@@ -68,12 +68,24 @@
             android:layout_weight="2"
             android:layout_height="match_parent"/>
         <Button
-            android:id="@+id/button3"
+            android:id="@+id/button3_set"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:layout_gravity="right"
             android:text="set" />
+        <View
+            android:layout_width="50pt"
+            android:background="#00000000"
+            android:layout_weight="2"
+            android:layout_height="match_parent"/>
+        <Button
+            android:id="@+id/button4_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:layout_gravity="right"
+            android:text="send" />
         <View
             android:layout_width="50pt"
             android:background="#00000000"
@@ -86,7 +98,8 @@
         android:background="@color/white"/>
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:id="@+id/scrollView">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

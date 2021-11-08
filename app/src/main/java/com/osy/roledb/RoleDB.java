@@ -17,8 +17,11 @@ import java.util.Random;
 public class RoleDB extends SQLiteOpenHelper {
     final String TAG = "RoleDB";
     String table_containKeyword = "table_containKeyword";
-    String consonantQuiz_lol_skin = "consonantQuiz_lol_skin";
-    String consonantQuiz_lol = "consonantQuiz_lol";
+    public String consonantQuiz_lol_skin = "consonantQuiz_lol_skin";
+    public String consonantQuiz_lol = "consonantQuiz_lol";
+    public String consonantQuiz_Drama = "consonantQuiz_Drama";
+    public String consonantQuiz_Nation = "consonantQuiz_Nation";
+    public String consonantQuiz_Movie = "consonantQuiz_Movie";
     Context context;
     SQLiteDatabase db;
 
@@ -38,11 +41,16 @@ public class RoleDB extends SQLiteOpenHelper {
                 "value varchar(100) not null);";
         db.execSQL(qry);
         initializeContainRole();
+        createConsonantQuiz("consonantGame_LoL2",consonantQuiz_lol_skin);
+        createConsonantQuiz("consonantGame_LoL",consonantQuiz_lol);
+        createConsonantQuiz("consonantGame_Drama",consonantQuiz_Drama);
+        createConsonantQuiz("consonantGame_Nation",consonantQuiz_Nation);
+        createConsonantQuiz("consonantGame_Movie",consonantQuiz_Movie);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + table_containKeyword);
+        //db.execSQL("DROP TABLE IF EXISTS " + table_containKeyword);
         onCreate(db);
     }
 
@@ -132,6 +140,7 @@ public class RoleDB extends SQLiteOpenHelper {
         return false;
     }
     public void viewConsonantQuizList(String tableName){
+        SQLiteDatabase db = getReadableDatabase();
         String checkValues = "select * from "+ tableName + " order by num asc;";
         Cursor cursor = db.rawQuery(checkValues,null);
         while(cursor.moveToNext()) {

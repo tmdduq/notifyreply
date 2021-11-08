@@ -14,6 +14,7 @@ import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import com.osy.callapi.ApiKMA;
+import com.osy.utility.LastTalk;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -46,7 +47,6 @@ public class NotifiService extends NotificationListenerService {
 
         for(Notification.Action act : wearableAction){
             if(act.getRemoteInputs() != null && act.getRemoteInputs().length>0){
-
                 replyString(getApplicationContext(), act, sbn.getNotification());
                 stopSelf();
 
@@ -69,6 +69,9 @@ public class NotifiService extends NotificationListenerService {
         intent.putExtra("sender", sender);
         intent.putExtra("message", message);
         sendBroadcast(intent);
+
+        LastTalk lastTalk = new LastTalk(context,act);
+        rs.lt.put(roomName, lastTalk);
 
         String lk = rs.topicChecker.get("subscriptionDailyNews"+roomName);
         if(lk!=null)
