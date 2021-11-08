@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
             if(!globalOnOff) tv.append("SYSTEM: 채팅을 정지합니다.\n");
             sv.post(()->sv.fullScroll(ScrollView.FOCUS_DOWN));
         });
+
         ((Button)findViewById(R.id.button2_add)).setOnClickListener(v -> {
             rs.addContainsKeyword(room.getSelectedItem().toString(), key.getText().toString(), values.getText().toString() );
             tv.append("SYSTEM: 학습하기"+room.getSelectedItem().toString()+"+"+key.getText().toString()+"+"+values.getText().toString()+  ".\n");
@@ -78,11 +79,9 @@ public class MainActivity extends AppCompatActivity {
 
                 });
 
-
         receiver = new NotificationReceiver( );
         IntentFilter filter = new IntentFilter("com.osy.notifyreply");
         registerReceiver(receiver,filter);
-
     }
 
     public void setSpinner(){
@@ -145,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
         RemoteInput.addResultsToIntent(act.getRemoteInputs(), sendIntent, msg);
         try {
             act.actionIntent.send(context, 0, sendIntent);
+            tv.append("SYSTEM: SEND TO : "+s+"\n");
             sv.post(()->sv.fullScroll(ScrollView.FOCUS_DOWN));
         } catch (PendingIntent.CanceledException e) {
             e.printStackTrace();
