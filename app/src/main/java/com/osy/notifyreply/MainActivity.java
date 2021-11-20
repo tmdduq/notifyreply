@@ -69,13 +69,25 @@ public class MainActivity extends AppCompatActivity {
 
         ((Button)findViewById(R.id.button3_set)).setOnClickListener(view->
                 startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")));
+
         ((Button)findViewById(R.id.button4_send)).setOnClickListener(view->{
-            if(key.getText().toString()=="1") {
-                tv.append("SYSTEM: 채팅방에 1 매크로를 가동합니다.\n");
+            if(key.getText().toString().contains("1")) {
+                String roomName = "macro"+room.getSelectedItem().toString();
+                String valueText = values.getText().toString();
+                if(rs.topicChecker.get(roomName)!=null) {
+                    tv.append("SYSTEM: 매크로가 이미 실행중입니다.\n");
+                    sv.post(() -> sv.fullScroll(ScrollView.FOCUS_DOWN));
+                    return;
+                }
+                rs.topicChecker.put(roomName,valueText);
+                tv.append("SYSTEM: 채팅방에 ["+ valueText + "]매크로를 가동합니다.\n");
                 sv.post(() -> sv.fullScroll(ScrollView.FOCUS_DOWN));
                 handlar.sendEmptyMessage(0);
             }
-            else replyMessage(values.getText().toString());
+            else if(key.getText().toString().contains("2"))
+                rs.topicChecker.remove("macro"+room.getSelectedItem().toString());
+            else
+                replyMessage(values.getText().toString());
 
                 });
 
@@ -96,15 +108,23 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(@NonNull Message msge) {
             super.handleMessage(msge);
+
             LastTalk lastTalk = rs.lt.get(room.getSelectedItem().toString());
             if(lastTalk==null){
                 tv.append("SYSTEM: 수신이력이 없습니다..\n");
                 sv.post(()->sv.fullScroll(ScrollView.FOCUS_DOWN));
                 return;
             }
+
+            if(rs.topicChecker.get("macro"+room.getSelectedItem().toString())==null) {
+                tv.append("SYSTEM: 1 매크로 중지.\n");
+                sv.post(() -> sv.fullScroll(ScrollView.FOCUS_DOWN));
+                return;
+            }
             Calendar c = Calendar.getInstance();
             if( c.get(Calendar.MINUTE)!=0 || c.get(Calendar.HOUR_OF_DAY)!=0)  {
                 sendEmptyMessageDelayed(0,5000);
+                Log.i("handler","timer...");
                 return;
             }
             tv.append("SYSTEM: check time.."+ c.get(Calendar.HOUR)+":00\n");
@@ -114,24 +134,23 @@ public class MainActivity extends AppCompatActivity {
             Intent sendIntent = new Intent();
             Bundle msg = new Bundle();
             for (RemoteInput inputable : act.getRemoteInputs())
-                msg.putCharSequence(inputable.getResultKey(), "1");
+                msg.putCharSequence(inputable.getResultKey(), values.getText().toString());
             RemoteInput.addResultsToIntent(act.getRemoteInputs(), sendIntent, msg);
             try {
                 act.actionIntent.send(context, 0, sendIntent);
-                tv.append("SYSTEM: 1 매크로 동작 완료.\n");
+                tv.append("SYSTEM: 매크로 동작 완료.\n");
                 sv.post(()->sv.fullScroll(ScrollView.FOCUS_DOWN));
             } catch (PendingIntent.CanceledException e) {
                 e.printStackTrace();
             }
 
-            int i = 0;
-            try{
-                i = Integer.parseInt(key.getText().toString());
-            }catch(Exception e){i = 0;}
-            if(i==0) sendEmptyMessageDelayed(0,60000);
-            else  tv.append("SYSTEM: 1 매크로 중지.\n");
+            sendEmptyMessageDelayed(0,60000);
+
         }
     };
+    public void sendMessage(){
+
+    }
 
     public void replyMessage(String s){
         LastTalk lastTalk = rs.lt.get(room.getSelectedItem().toString());
@@ -157,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
             String message = intent.getStringExtra("message");
             String sender = intent.getStringExtra("sender");
             Log.i("MainActivity", " Broad Receive sender/message: " +sender+"/"+message);
-            tv.setText(sender+":"+message +"\n"+ tv.getText());
+            tv.append(sender+":"+message +"\n");
             sv.post(()->sv.fullScroll(ScrollView.FOCUS_DOWN));
         }
     }

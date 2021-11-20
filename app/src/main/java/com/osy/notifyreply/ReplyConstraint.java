@@ -16,6 +16,7 @@ import com.osy.callapi.ApiCorona;
 import com.osy.callapi.ApiDict;
 import com.osy.callapi.ApiKMA;
 import com.osy.callapi.ApiSellApart;
+import com.osy.callapi.ApiStock;
 import com.osy.callapi.RssNews;
 import com.osy.callapi.RssTopSearch;
 import com.osy.roledb.RoleDB;
@@ -383,12 +384,13 @@ public class ReplyConstraint {
             }
         }
         if(keyword.contains("청약") && (keyword.contains("정보")|| keyword.contains("접수"))){
-            int rank=1;
-            if(keyword.contains("특")) rank =0;
-            else if(keyword.contains("2")) rank =2;
+            String[] t = new ApiApplyhome(context).getApplyhome(keyword);
+            if(t != null) return t;
+        }
 
-            String t = new ApiApplyhome().getApplyhome(rank);
-            if(t != null) return new String[]{t};
+        if(keyword.contains("주식") || keyword.contains("주가")){
+            String t = new ApiStock(context).getStocks(keyword);
+            if(t !=null) return new String[]{t};
         }
 
 

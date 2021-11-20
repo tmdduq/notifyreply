@@ -1,5 +1,9 @@
 package com.osy.callapi;
 
+import android.content.Context;
+
+import com.osy.notifyreply.R;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -18,9 +22,26 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
 public class ApiApplyhome {
+    Context context;
+    String ApiKey;
+    String[] allSido = {"강원", "광주", "부산", "인천", "충남", "경기", "기타", "서울", "전남", "충복",
+            "경남", "대구", "세종", "전북", "경북", "대전", "울산", "제주"};
 
-    public String getApplyhome(int rank){
+    public ApiApplyhome(Context context){
+        this.context = context;
+        ApiKey = context.getResources().getString(R.string.apllyhomeKey);
+    }
+
+    public String[] getApplyhome(String keyword){
+        int rank = 1;
+        if(keyword.contains("특")) rank = 0;
+        else if(keyword.contains("2")) rank = 2;
         // 0 -특별 // 1-1순위 // 2-2순위
+
+        String selectSido = null;
+        for(String s : allSido)
+            if(selectSido==null && keyword.contains(s)) selectSido = s;
+
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.MONTH, -2);
         int tempDate = cal.get(Calendar.MONTH)+1;
@@ -33,7 +54,7 @@ public class ApiApplyhome {
         String rankString = rank==0 ? "특별공급" : rank==2 ? "2순위" : "1순위";
 
         String urlString = "http://openapi.reb.or.kr/OpenAPI_ToolInstallPackage/service/rest/ApplyhomeInfoSvc/getLttotPblancList"
-                + "?serviceKey=AnHCVCcJA4ryVT2mLGxn39ArocUJ4u24CjC48xSzKW5YEs1eQczGINhGX6rqt%2BCnZ9Z4hwcBYdFzcxeJWPMY5w%3D%3D"
+                + "?serviceKey="+ApiKey
                 + "&startmonth="+startDate
                 + "&endmonth=" + endDate
                 + "&numOfRows=100";
@@ -47,12 +68,12 @@ public class ApiApplyhome {
             XPath xpath = xPathFactory.newXPath();
 
             XPathExpression expr = xpath
-                    .compile("//houseManageNo | //houseNm | //pblancNo | //rceptBgnde | //sido");
+                    .compile("//houseManageNo | //houseNm | //pblancNo | //rceptEndde | //sido");
             NodeList nodeList = (NodeList) expr.evaluate(document, XPathConstants.NODESET);
 
             StringBuilder sb = new StringBuilder("");
 
-            String[] nodeNameList = new String[] {"houseManageNo", "houseNm", "pblancNo", "rceptBgnde", "sido", "gnrlrnk1crsparearceptpd", "hssplyadres"};
+            String[] nodeNameList = new String[] {"houseManageNo", "houseNm", "pblancNo", "rceptEndde", "sido", "gnrlrnk1crsparearceptpd", "hssplyadres"};
             ArrayList<String[]> valueList = new ArrayList<String[]>();
 
 
@@ -64,14 +85,18 @@ public class ApiApplyhome {
                 if(nodeName.matches(nodeNameList[i%5]))
                     values[i%5] = node.getTextContent();
 
-                if(i%5==4) valueList.add(values.clone());
+                if(i%5==4)
+                    if(selectSido!=null)
+                        if(values[4].matches(selectSido)) valueList.add(values.clone());else;
+                    else valueList.add(values.clone());
+
             }
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
             for(int i=0 ; i<valueList.size() ; i++) {
-                long gap = sdf.parse(valueList.get(i)[3]).getTime() - Calendar.getInstance().getTimeInMillis();
-                if(gap<0) {
+                long gap = sdf.parse(valueList.get(i)[3]).getTime() +(3600000*17) - Calendar.getInstance().getTimeInMillis();
+                if(gap< 0) {
                     valueList.remove(i--);
                     continue;
                 }
@@ -82,7 +107,10 @@ public class ApiApplyhome {
                 }
                 valueList.get(i)[5] = t[0];
                 valueList.get(i)[6] = t[1];
-
+            }
+            if(valueList.size()==0){
+                if(selectSido==null) return new String[]{"청약정보가 없어요."};
+                else return new String[]{ "다가오는 일주일동안 "+selectSido+"지역 청약정보가 없어요."};
             }
             valueList.sort(new ApplyhomeComparator());
             for(int i=0 ; i<valueList.size() ; i++){
@@ -91,8 +119,8 @@ public class ApiApplyhome {
 //              sb.append(""+s[6]+"\n");  //주소
             }
             sb.append(rankString+" 청약접수가 머지 않았어요!");
-//            System.out.println(sb.toString());
-            return sb.toString();
+            if(selectSido ==null) return new String[]{sb.toString(), "원하는 지역만 검색할 수 있어요!\nex)인천 청약정보 2순위"};
+            else return new String[]{sb.toString()};
 
         }catch(Exception e) {e.printStackTrace();}
         return null;
@@ -101,7 +129,7 @@ public class ApiApplyhome {
     String[] detailInfo(String houseManageNo, String pblancNo, int rank){
 
         String urlString = "http://openapi.reb.or.kr/OpenAPI_ToolInstallPackage/service/rest/ApplyhomeInfoSvc/getAPTLttotPblancDetail"
-                + "?serviceKey=AnHCVCcJA4ryVT2mLGxn39ArocUJ4u24CjC48xSzKW5YEs1eQczGINhGX6rqt%2BCnZ9Z4hwcBYdFzcxeJWPMY5w%3D%3D"
+                + "?serviceKey="+ApiKey
                 + "&houseManageNo=" + houseManageNo
                 + "&pblancNo=" + pblancNo;
         String rankString = rank == 0 ? "spsplyrceptbgnde" : rank==2 ? "gnrlrnk2crsparearceptpd" : "gnrlrnk1crsparearceptpd";
@@ -126,8 +154,8 @@ public class ApiApplyhome {
                 gnrlrnk1crsparearceptpd = t;
             }
             Date date = new SimpleDateFormat("yyyy-MM-dd").parse(gnrlrnk1crsparearceptpd);
-            long gap = date.getTime() - System.currentTimeMillis();
-            if(gap < (long)86400000*7) {
+            long gap = date.getTime()+(3600000*17) - System.currentTimeMillis();
+            if(gap >0 && gap < (long)86400000*7) {
                 System.out.println(gnrlrnk1crsparearceptpd +" " +  hssplyadres);
                 return new String[] {gnrlrnk1crsparearceptpd, hssplyadres};
             }

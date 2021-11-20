@@ -13,7 +13,7 @@
         <domain includeSubdomains="true" tag="best search keyword">trends.google.co.kr</domain>
         <domain includeSubdomains="true" tag="CGV movie info">www.cgv.co.kr</domain>
         <domain includeSubdomains="true" tag="applyhome">openapi.reb.or.kr</domain>
-
+        <domain includeSubdomains="true" tag="stock">api.seibro.or.kr</domain>
 
     </domain-config>
 </network-security-config>
