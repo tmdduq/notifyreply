@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String message = intent.getStringExtra("message");
             String sender = intent.getStringExtra("sender");
-            Log.i("MainActivity", " Broad Receive sender/message: " +sender+"/"+message);
+            Log.i("MainActivity", " Broad Receive(sender/message) ");
             tv.append(sender+":"+message +"\n");
             sv.post(()->sv.fullScroll(ScrollView.FOCUS_DOWN));
         }

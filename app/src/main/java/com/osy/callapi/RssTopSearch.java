@@ -17,6 +17,9 @@ public class RssTopSearch {
 
     final String TAG = "RssTopSearch";
 
+    public RssTopSearch(){
+        Log.i(TAG, "Class on - "+TAG);
+    }
     public String getTopSearchKeyword(){
 
         String urlString = "https://trends.google.co.kr/trends/trendingsearches/daily/rss?geo=KR";

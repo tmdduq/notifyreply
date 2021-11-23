@@ -3,17 +3,18 @@ package com.osy.callapi;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Calendar;
 
 public class AnalysCGV {
     final String TAG = "AnalysCGV";
     public ArrayList<String> movieName= new ArrayList<String>();
 
+    public AnalysCGV(){
+        Log.i(TAG, "Class on - "+TAG);
+    }
 
     public String cgvRunningMoive(String targetDate){
         String urlString = "http://www.cgv.co.kr/common/showtimes/iframeTheater.aspx?areacode=202&theatercode=0325&date="+targetDate;

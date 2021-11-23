@@ -2,14 +2,10 @@ package com.osy.callapi;
 
 import android.content.Context;
 import android.util.Log;
-
 import com.osy.notifyreply.R;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Random;
@@ -20,6 +16,7 @@ public class ApiDict {
     String ApiKey;
 
     public ApiDict(Context context){
+        Log.i(TAG, "Class on - "+TAG);
         this.context = context;
         ApiKey = context.getResources().getString(R.string.dictKey);
     }

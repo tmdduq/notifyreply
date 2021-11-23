@@ -1,7 +1,6 @@
 package com.osy.callapi;
 
 import android.util.Log;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -27,6 +26,7 @@ public class ApiCoin {
     final String[] coinCodeList_BITHUMB = new String[]{"BTC", "WEMIX", "ETH", "BORA", "ASM", "XRP", "SAND", "MANA", "DVI", "POWR", "BFC", "ENJ", "CYCLUB", "EVZ", "XNO", "LF", "WAXP", "CHR", "SOL", "TEMCO", "MIX", "KLAY", "FIT", "QTCON", "PCI", "COLA", "LRC", "DOGE", "MSB", "ANV", "ALICE", "ADA", "TRX", "AERGO", "LTC", "ANW", "QTUM", "HIVE", "ETC", "SOC", "LPT", "XEC", "EOS", "MVC", "DOT", "POLA", "MLK", "ALGO", "AQT", "OMG", "SSX", "QKC", "LUNA", "MBL", "WICC", "XLM", "VET", "SXP", "CKB", "RAI", "COS", "BIOT", "LINK", "GHX", "CHZ", "BNB", "ARW", "CRO", "EL", "BTT", "BAT", "LOOM", "AXS", "ANKR", "ORC", "ADP", "BCH", "CTSI", "VRA", "BASIC", "ATOM", "APIX", "XTZ", "MATIC", "MM", "GLM", "CENNZ", "WIKEN", "OXT", "NU", "WOM", "HDAC", "ICX", "ORBS", "YFI", "HIBS", "UOS", "SNX", "AMO", "ELF", "META", "RINGX", "ONT", "STRAX", "ONG", "UNI", "BTG", "XPR", "TMTG", "AWO", "SRM", "XEM", "CTXC", "PUNDIX", "FX", "CELR", "AION", "MTL", "BOA", "BSV", "CON", "OCEAN", "STEEM", "FLETA", "LINA", "TRV", "BLY", "REN", "SUN", "BURGER", "RSR", "VELO", "MAP", "KNC", "EM", "THETA", "TRUE", "IOST", "GRT", "GOM2", "WOZX", "UMA", "JST", "ARPA", "FCT", "OBSR", "SNT", "BCD", "GXC", "ZRX", "XYM", "IPX", "RLY", "VALOR", "APM", "DAD", "MIR", "BAL", "DAI", "TFUEL", "RLC", "SUSHI", "ZIL", "VSYS", "REP", "KSM", "AAVE", "CAKE", "EGG", "WTC", "WAVES", "BAKE", "XVS", "COMP", "BNT", "NMR", "MKR", "CTK", "BEL", "MXC"};
 
     public ApiCoin(){
+        Log.i(TAG, "Class on - "+TAG);
         getBithumbList();
         getUpbitList();
     }

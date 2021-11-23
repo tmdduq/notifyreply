@@ -2,31 +2,17 @@ package com.osy.callapi;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.content.res.Resources;
-import android.content.res.XmlResourceParser;
 import android.util.Log;
 
 import com.osy.notifyreply.R;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.StringReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 public class ApiSellApart {
     final String TAG = "ApiSellApart";
@@ -34,6 +20,7 @@ public class ApiSellApart {
     Context context;
 
     public ApiSellApart(Context context){
+        Log.i(TAG, "Class on - "+TAG);
         this.context = context;
         ApiKey = context.getResources().getString(R.string.sellApartKey);
     }

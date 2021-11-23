@@ -1,5 +1,7 @@
 package com.osy.callapi;
 
+import android.util.Log;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -7,6 +9,7 @@ import org.w3c.dom.NodeList;
 import java.net.URL;
 
 public class RssNews {
+    final String TAG = "RssNews";
     String[] newsURL = new String[4];
     public static final int YONHAP = 0;
     public static final int JOONGANG = 1;
@@ -14,6 +17,7 @@ public class RssNews {
     public static final int SBS = 3;
 
     public RssNews(){
+        Log.i(TAG, "Class on - "+TAG);
         newsURL[0] = "https://www.yonhapnewstv.co.kr/category/news/headline/feed/";
         newsURL[1] = "https://rss.joins.com/joins_homenews_list.xml";
         newsURL[2] = "https://fs.jtbc.joins.com//RSS/newsflash.xml";

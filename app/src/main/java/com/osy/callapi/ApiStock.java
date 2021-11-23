@@ -29,6 +29,7 @@ public class ApiStock {
     Context context;
 
     public ApiStock(Context context){
+        Log.i(TAG, "Class on - "+TAG);
         this.context = context;
         apiKey = context.getResources().getString(R.string.stockKey);
     }

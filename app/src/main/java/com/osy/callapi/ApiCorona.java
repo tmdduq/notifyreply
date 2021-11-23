@@ -1,21 +1,13 @@
 package com.osy.callapi;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.util.Log;
-
 import com.osy.notifyreply.R;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLConnection;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -31,6 +23,7 @@ public class ApiCorona {
     String ApiKey = null;
 
     public ApiCorona(Context context){
+        Log.i(TAG, "Class on - "+TAG);
         ApiKey =  context.getResources().getString(R.string.coronaKey);
     }
 

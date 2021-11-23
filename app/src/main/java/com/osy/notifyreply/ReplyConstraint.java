@@ -1,15 +1,11 @@
 package com.osy.notifyreply;
 
-import android.app.Notification;
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
 import android.database.Cursor;
-import android.os.Environment;
-import android.renderscript.ScriptGroup;
 import android.util.Log;
 
 import com.osy.callapi.AnalysCGV;
+import com.osy.callapi.AnalysConvensia;
 import com.osy.callapi.ApiApplyhome;
 import com.osy.callapi.ApiCoin;
 import com.osy.callapi.ApiCorona;
@@ -19,14 +15,11 @@ import com.osy.callapi.ApiSellApart;
 import com.osy.callapi.ApiStock;
 import com.osy.callapi.RssNews;
 import com.osy.callapi.RssTopSearch;
+import com.osy.callapi.AnalysPlace;
 import com.osy.roledb.RoleDB;
 import com.osy.utility.DataRoom;
 import com.osy.utility.LastTalk;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -123,6 +116,7 @@ public class ReplyConstraint {
     }
 
     public void setInitialize(Context context){
+        Log.i(TAG, "method on - setInitialize");
         if(roleDB==null)
             roleDB = new RoleDB(context,"roleList",null,4);
         Cursor cursor = roleDB.getContainsKeyList(null); // contains
@@ -131,7 +125,7 @@ public class ReplyConstraint {
             String room = cursor.getString(0);
             String key = cursor.getString(1);
             String value = cursor.getString(2);
-            Log.i(TAG, "setInstance readRole(r/k/v): "+room+"/"+key+"/"+value);
+//            Log.i(TAG, "setInstance readRole(r/k/v): "+room+"/"+key+"/"+value);
             roomNodes = new ReplyFunction().setKeyList(roomNodes, room , key, value);
         }
 
@@ -139,7 +133,7 @@ public class ReplyConstraint {
     }
 
     public String[] ifShowReplyList(String room,String keyword){
-        Log.i(TAG, "ifShowReplyList room/keyword : " + room +"/"+keyword);
+        Log.i(TAG, "method on - ifShowReplyList");
         if(keyword.startsWith("학습목록보기") ||keyword.startsWith("ㅎㅅㅁㄹㅂㄱ")|| keyword.startsWith("ㅎㅅㅁㄼㄱ")   ) {
             Cursor cursor;
             StringBuilder sb = new StringBuilder("");
@@ -169,6 +163,7 @@ public class ReplyConstraint {
     }
 
     public boolean addContainsKeyword(String room, String key, String value){
+        Log.i(TAG, "method on - addContainsKeyword");
         if(room.length() > 27) room = room.substring(0,27);
         if(key.length() > 18) key = key.substring(0,18);
         if(value.length() > 90) value= value.substring(0,90);
@@ -179,7 +174,7 @@ public class ReplyConstraint {
         return true;
     }
     public String[] ifLotto(String room, String keyword) {
-        Log.i(TAG, "ifLotto room/keyword : " + room +"/"+keyword);
+        Log.i(TAG, "method on - ifLotto");
         if(!keyword.contains("로또") || !keyword.contains("추천")) return null;
         Random r = new Random();
         r.setSeed(System.currentTimeMillis());
@@ -202,7 +197,7 @@ public class ReplyConstraint {
     }
 
     public String[] ifOnOff(String room, String keyword){
-        Log.i(TAG, "ifOnOff room/keyword : " + room +"/"+keyword);
+        Log.i(TAG, "method on - ifOnOff");
         if(isOperation.get(room)==null){
             roomNodes = new ReplyFunction().setKeyList(roomNodes, room,"안녕","안녕하세요");
             roomNodes = new ReplyFunction().setKeyList(roomNodes, room,"하이","하이하이^-^");
@@ -218,7 +213,7 @@ public class ReplyConstraint {
         return null;
     }
     public String[] subscriptionDailyNews(String room, String keyword) {
-        Log.i(TAG, "subscriptionDailyNews room/keyword : " + room +"/"+keyword);
+        Log.i(TAG, "method on - subscriptionDailyNews");
         if(!keyword.startsWith("뉴스")) return null;
         Calendar cal = Calendar.getInstance();
 
@@ -242,6 +237,7 @@ public class ReplyConstraint {
     }
 
     public String[] ifDeleteKey(String room, String keyword){
+        Log.i(TAG, "method on - ifDeleteKey");
         if(keyword.startsWith("학습목록삭제") || keyword.startsWith("ㅎㅅㅁㄹㅅㅈ") || keyword.startsWith("ㅎㅅㅁㄽㅈ")) {
             try {
                 String[] del = keyword.split(" ");
@@ -262,7 +258,7 @@ public class ReplyConstraint {
 
 
     public String[] ifContainsKeyword(String room, String keyword){
-        Log.i(TAG, "ifContainsKeyword room/keyword : "+room+"/"+keyword);
+        Log.i(TAG, "method on - ifContainsKeyword");
 
         for(DataRoom<DataRoom<String>> roomNode : roomNodes)
             if(roomNode.label.matches(room))
@@ -281,7 +277,7 @@ public class ReplyConstraint {
     }
 
     public String[] ifApiQuestion(String room, String keyword, Context context){
-        Log.i(TAG, "ifApiQuestion room/keyword : "+room+"/"+keyword);
+        Log.i(TAG, "method on - ifApiQuestion");
         if(keyword.contains(" 날씨")) {
             if(keyword.contains("오늘 날씨")) keyword = "연수구 송도1동 날씨";
             String[] addr = keyword.split(" ");
@@ -393,16 +389,32 @@ public class ReplyConstraint {
             if(t !=null) return new String[]{t};
         }
 
+        if(keyword.contains("컨벤시아")){
+            String t = new AnalysConvensia().getConvensia(keyword);
+            if(t !=null) return new String[]{t};
+        }
+        if(keyword.contains("영업시간") || (keyword.contains("전화번호") ) || keyword.contains("위치정보")){
+            String[] t = new AnalysPlace().getPlace(keyword);
+            if(t !=null) return t;
+        }
+        if(keyword.contains("맛집 추천") || keyword.contains("메뉴 추천") || keyword.contains("뭐 먹지")
+        || keyword.contains("맛집추천") ||keyword.contains("메뉴추천")||keyword.contains("뭐먹지")){
+            String[] t = new AnalysPlace().recommandPlace(keyword);
+            if(t !=null) return t;
+        }
+
 
         return null;
     }
     public String[] ifMatchExpletiveKeyword(String room, String keyword){
+        Log.i(TAG, "method on - ifMatchExpletiveKeyword");
 //        for(String s : expletiveKeyword)
 //         if (keyword.contains(s)) return "욕하지마세요ㅜ_ㅜ";
         return null;
     }
 
     public String[] ifEducateKeyword(String room, String str){
+        Log.i(TAG, "method on - ifEducateKeyword");
         String t = "말을 가르치고 싶으세요?\n" +
                 "학습하기+키워드+대답 을 입력해보세요!\n" +
                 "예시) 학습하기+배고파+밥먹어";
@@ -422,7 +434,7 @@ public class ReplyConstraint {
         return null;
     }
     public String[] specialKeyword(String keyword){
-        Log.i(TAG, "specialKeyword keyword : " +"/"+keyword);
+        Log.i(TAG, "method on - specialKeyword");
         if( !keyword.contains("도움말") || !keyword.contains("봇")) return null;
 
         if(keyword.contains("11")){
@@ -491,7 +503,7 @@ public class ReplyConstraint {
     }
 
     public String[] ifConsonantGame(String sender, String room, String str){
-        Log.i(TAG, "ifConsonantGame room/keyword : "+room+"/"+str);
+        Log.i(TAG, "method on - ifConsonantGame");
         String[] quizName = new String[]{"consonantQuiz_lol", "consonantQuiz_lol_skin","consonantQuiz_Drama", "consonantQuiz_Nation","consonantQuiz_Movie"};
 
         String quizRoom = "beforeConsonantGame"+room;

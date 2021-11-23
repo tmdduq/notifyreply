@@ -1,6 +1,7 @@
 package com.osy.callapi;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.osy.notifyreply.R;
 
@@ -22,12 +23,14 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
 public class ApiApplyhome {
+    final String TAG = "ApiApplyhome";
     Context context;
     String ApiKey;
     String[] allSido = {"강원", "광주", "부산", "인천", "충남", "경기", "기타", "서울", "전남", "충복",
             "경남", "대구", "세종", "전북", "경북", "대전", "울산", "제주"};
 
     public ApiApplyhome(Context context){
+        Log.i(TAG, "Class on - "+TAG);
         this.context = context;
         ApiKey = context.getResources().getString(R.string.apllyhomeKey);
     }
