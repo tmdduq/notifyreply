@@ -15,6 +15,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -38,6 +40,12 @@ public class MainActivity extends AppCompatActivity {
     ScrollView sv;
     private NotificationReceiver receiver;
     ReplyConstraint rs;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setSpinner();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +72,15 @@ public class MainActivity extends AppCompatActivity {
             rs.addContainsKeyword(room.getSelectedItem().toString(), key.getText().toString(), values.getText().toString() );
             tv.append("SYSTEM: 학습하기"+room.getSelectedItem().toString()+"+"+key.getText().toString()+"+"+values.getText().toString()+  ".\n");
             sv.post(()->sv.fullScroll(ScrollView.FOCUS_DOWN));
-            setSpinner();
+        });
+        room.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position==1) setSpinner();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
         });
 
         ((Button)findViewById(R.id.button3_set)).setOnClickListener(view->
@@ -99,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
     public void setSpinner(){
         ArrayList<String> roomList = new ArrayList<String>();
         roomList.add("채팅방 선택");
+        roomList.add("★목록 업데이트★");
         for(DataRoom r : rs.roomNodes) roomList.add(r.label);
         ArrayAdapter<String> roomAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, roomList);
         room.setAdapter(roomAdapter);

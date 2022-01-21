@@ -214,7 +214,7 @@ public class ReplyConstraint {
     }
     public String[] subscriptionDailyNews(String room, String keyword) {
         Log.i(TAG, "method on - subscriptionDailyNews");
-        if(!keyword.startsWith("뉴스")) return null;
+        if(!keyword.contains("뉴스")) return null;
         Calendar cal = Calendar.getInstance();
 
         if(keyword.matches("뉴스 구독")) {
@@ -226,7 +226,7 @@ public class ReplyConstraint {
             topicChecker.remove("subscriptionDailyNews"+room);
             return new String[]{"아침 뉴스 안할게요!"};
         }
-        else if(keyword.contains("보기")){
+        else if(keyword.contains("보기") || keyword.contains("오늘")||keyword.contains("지금") ||keyword.contains("인기")){
             if(keyword.contains("연합")) return new RssNews().getNews(RssNews.YONHAP);
             if(keyword.contains("중앙")) return new RssNews().getNews(RssNews.JOONGANG);
             if(keyword.contains("JTBC") || keyword.contains("jtbc")) return new RssNews().getNews(RssNews.JTBC);
@@ -259,20 +259,24 @@ public class ReplyConstraint {
 
     public String[] ifContainsKeyword(String room, String keyword){
         Log.i(TAG, "method on - ifContainsKeyword");
-
+        boolean isFirstRoom = true;
         for(DataRoom<DataRoom<String>> roomNode : roomNodes)
-            if(roomNode.label.matches(room))
-                for(DataRoom<String> keyNode : roomNode.dataList) {
+            if(roomNode.label.matches(room)) {
+                isFirstRoom = false;
+                for (DataRoom<String> keyNode : roomNode.dataList) {
 
                     String[] t = new String[]{keyNode.label};
-                    if(keyNode.label.contains(" ")) t = keyNode.label.split(" ");
+                    if (keyNode.label.contains(" ")) t = keyNode.label.split(" ");
 
-                    for(int i  = 0 ; i< t.length ; i++) {
+                    for (int i = 0; i < t.length; i++) {
                         if (!keyword.contains(t[i])) break;
-                        if( i+1 == t.length) return new String[]{keyNode.dataList.get(new Random().nextInt(keyNode.dataList.size()))};
+                        if (i + 1 == t.length)
+                            return new String[]{keyNode.dataList.get(new Random().nextInt(keyNode.dataList.size()))};
                     }
 
                 }
+            }
+        if(isFirstRoom) addContainsKeyword(room,"안녕","안녕하세요.^^");
         return null;
     }
 
@@ -464,6 +468,12 @@ public class ReplyConstraint {
                         "ex) CGV 인셉션 시간표\n" +
                         "ex) CGV 토요일 인셉션 시간표\n" +
                         "ex) CGV 내일 인셉션 시간표",
+                seq+++">맛집 추천\n" +
+                        "ex) 한식 맛집 추천\n" +
+                        "ex) 커넬워크 맛집 추천",
+                seq+++">컨벤시아 전시 일정\n" +
+                        "-> [날짜] 컨벤시아\n" +
+                        "ex) 28일 컨벤시아",
                 seq+++">실시간 코인 가격\n" +
                         "-> [코인명] 시세\n" +
                         "ex) 이더리움 시세\n" +
@@ -474,8 +484,8 @@ public class ReplyConstraint {
                         "ex) 삼성전자 주가",
                 seq+++">뉴스 확인\n" +
                         "ex) 뉴스 보기\n" +
-                        "ex) 뉴스 구독\n",
-                seq+++">롤 초성퀴즈 풀기\n" +
+                        "ex) 뉴스 구독",
+                seq+++">초성퀴즈 풀기\n" +
                         "ex) 퀴즈 시작\n" +
                         "ex) 퀴즈 중지\n" +
                         "ex) 힌트",
