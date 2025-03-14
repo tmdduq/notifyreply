@@ -2,11 +2,14 @@ package com.osy.callapi;
 
 import android.util.Log;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -19,54 +22,57 @@ public class AnalysConvensia {
     }
     public String getConvensia(String keyword){
 
-        ArrayList<Integer> targetDays = new ArrayList<>();
         Calendar c = Calendar.getInstance();
-        int today = c.get(Calendar.DAY_OF_MONTH);
-        String yyyyMM;
-        try{
-            if(keyword.contains("내일")){
-                c.add(Calendar.DAY_OF_MONTH,1);
-                targetDays.add(c.get(Calendar.DAY_OF_MONTH));
-            }
+        String targetDay = null;
+        if(keyword.contains("내일")){
+            c.add(Calendar.DAY_OF_MONTH,1);
+            targetDay = new SimpleDateFormat("yyyyMMdd").format(c.getTime());
+        }
+        else{
             keyword = keyword.replaceAll("[^0-9 ]","");
             String[] d = keyword.split(" ");
-            for(String dd : d)
-                targetDays.add(Integer.parseInt(dd));
-        }catch(Exception e){ e.printStackTrace(); }
-
-        if(targetDays.size()==0) targetDays.add(today);
+            int today= c.get(Calendar.DAY_OF_MONTH);
+            for(String dd : d){
+                try {
+                    int t = Integer.parseInt(dd);
+                    if (t < today)
+                        c.add(Calendar.MONTH, 1);
+                    targetDay = new SimpleDateFormat("yyyyMM").format(c.getTime()) + (t > 9 ? t : ("0" + t));
+                    break;
+                }catch(Exception e){}
+            }
+        }
+        if(targetDay == null) targetDay = new SimpleDateFormat("yyyyMMdd").format(c.getTime());
 
         try {
-            StringBuilder sb = new StringBuilder();
-            for(int n = 0 ; n < targetDays.size() ; n++) {
-                if(n>0) break; ///// 너무 길어서 보기 싫음..
-                int targetDay = targetDays.get(n);
-                c = Calendar.getInstance();
-                if(targetDay < today) c.add(Calendar.MONTH,1);
-                yyyyMM = new SimpleDateFormat("yyyyMM").format(c.getTime());;
+            String urlString = "https://songdoconvensia.visitincheon.or.kr/schedule/list.do?startDt="+targetDay+"&endDt="+targetDay+"&type=1%2C2%2C3%2C4";
+            Log.i("UrlString",""+urlString);
+            URL url = new URL(urlString);
+            URLConnection urlConnection = url.openConnection();
+            InputStream is = urlConnection.getInputStream();
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            String response = br.readLine();
 
-                String urlString = "http://songdoconvensia.visitincheon.or.kr/sch/organizer/scinfo/event/UI-SC-0101-001Q.do?eventDivH=ALL&menuDiv=10&YYYYMM=" + yyyyMM;
-                Document document = Jsoup.connect(urlString).get();
-                Elements elements = document.select("div.contents div.con_calendar td.txt_event");
-                elements.add(Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1, document.select("div.contents div.con_calendar td.txt_today").first());
-//			select문법(예시) : tag (div) // #id (div#wrap, #logo) // .class(div.left, .result) // [attr] (a[href], [title])
+            JSONArray mainArray = new JSONArray(response);
+            int arrayLength = mainArray.length();
+            StringBuilder sb = new StringBuilder(""+ targetDay.substring(4,6)+"월"+ targetDay.substring(6)+"일 컨벤시아는\n");
+           if(arrayLength == 0)
+               return sb.append("행사가 없어요.").toString();
+            else
+                sb.append(arrayLength+"개 행사가 있어요!");
 
-                Element element = elements.get(targetDay - 1);
-                Elements dayElements = element.getElementsByTag("a");
-                sb.append((c.get(Calendar.MONTH)+ 1) + "월" + element.select("strong").first().text() + "일은 ");
-                if (dayElements.isEmpty()) sb.append("컨벤시아 행사가 없어요.\n");
-                else sb.append(dayElements.size() + "개 행사가 있어요.\n");
-
-                for (int i = 0; i < dayElements.size(); i++)
-                    sb.append("＊ " + dayElements.get(i).text() + "\n");
+            Log.i("mainArray length",""+arrayLength);
+            for(int i = 0 ; i < arrayLength ; i ++){
+                JSONObject item = (JSONObject) mainArray.get(i);
+                String title = item.getString("title");
+                String company = item.getString("hostCompHome");
+                Log.i("data", title+" // " + company);
+                sb.append(String.format("\n%d.%s(%s)", i+1, title, company) );
             }
-            if(sb.length()>30) sb.append("즐거운 컨벤시아 관람되세요!");
             return sb.toString();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return null;
     }
 

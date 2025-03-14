@@ -7,9 +7,10 @@ public class LastTalk {
         private Context context;
         private Notification.Action act;
 
-    public LastTalk(Context context, Notification.Action act) {
+    public LastTalk(Context context, Notification.Action[] acts) {
         this.context = context;
-        this.act = act;
+        for(Notification.Action a : acts)
+            if( a.getRemoteInputs() !=null ) this.act = a;
     }
 
     public Context getContext() {

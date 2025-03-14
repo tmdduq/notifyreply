@@ -22,37 +22,34 @@ public class RssTopSearch {
     }
     public String getTopSearchKeyword(){
 
-        String urlString = "https://trends.google.co.kr/trends/trendingsearches/daily/rss?geo=KR";
+        //String urlString = "https://trends.google.co.kr/trends/trendingsearches/daily/rss?geo=KR";
+        String urlString = "https://trends.google.com/trending/rss?geo=KR";
         try{
             URL url = new URL(urlString);
             URLConnection urlConnection = url.openConnection();
             Log.i(TAG, "getTopSearchKeyword: "+urlString);
             Document document  = new ApiParser().parseXML(urlConnection.getInputStream());
             NodeList nodeList = document.getElementsByTagName("item");
-
+            Log.i(TAG, ""+nodeList.getLength());
             StringBuilder sb = new StringBuilder("");
-            for(int i = 0 ; i< nodeList.getLength() ; i++){
+            for(int i = 0 ; i< nodeList.getLength() && i<5  ; i++){
                 Node node = nodeList.item(i).getFirstChild();
-                String t = null;
+
                 for( ; node!=null ; node = node.getNextSibling()){
                     String nodeName = node.getNodeName();
                     if(nodeName.equals("title"))
-                        t = (i + 1) + "위: " + node.getChildNodes().item(0).getTextContent();
+                        sb.append( (i + 1) + "위: " + node.getChildNodes().item(0).getTextContent() );
                     if(nodeName.matches("ht:approx_traffic"))
-                        t += " ("+node.getTextContent()+")";
+                        sb.append(" ("+node.getTextContent()+")");
                     else if(nodeName.equals("pubDate")){
                         SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy", new Locale("en","US"));
                         String curTime = sdf.format(Calendar.getInstance().getTime());
                         String nodeValue = node.getTextContent().substring(0,16);
-                        if(!curTime.matches(nodeValue))
-                            return sb.toString()+"구글에서 가져왔어요!";
-
-                        sb.append(t+"\n");
-                        t = null;
                     }
                 }
+                sb.append("\n");
             }
-        return sb.toString();
+        return sb.toString()+"구글에서 가져왔어요!";
 
         }catch (Exception e){
             e.printStackTrace();

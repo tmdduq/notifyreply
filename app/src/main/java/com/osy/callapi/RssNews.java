@@ -12,15 +12,15 @@ public class RssNews {
     final String TAG = "RssNews";
     String[] newsURL = new String[4];
     public static final int YONHAP = 0;
-    public static final int JOONGANG = 1;
+    public static final int DONGA = 1;
     public static final int JTBC = 2;
     public static final int SBS = 3;
 
     public RssNews(){
         Log.i(TAG, "Class on - "+TAG);
         newsURL[0] = "https://www.yonhapnewstv.co.kr/category/news/headline/feed/";
-        newsURL[1] = "https://rss.joins.com/joins_homenews_list.xml";
-        newsURL[2] = "https://fs.jtbc.joins.com//RSS/newsflash.xml";
+        newsURL[1] = "https://rss.donga.com/total.xml";
+        newsURL[2] = "https://news-ex.jtbc.co.kr/v1/get/rss/issue";
         newsURL[3] = "https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=03&plink=RSSREADER";
     }
 
@@ -37,7 +37,7 @@ public class RssNews {
                     sb.append("연합뉴스입니다." + "\n");
                     break;
                 case 1:
-                    sb.append("중알일보입니다." + "\n");
+                    sb.append("동아일보입니다." + "\n");
                     i = 2;
                     break;
                 case 2:

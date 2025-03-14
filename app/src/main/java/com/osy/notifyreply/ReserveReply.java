@@ -6,17 +6,17 @@ import java.util.Map;
 
 public class ReserveReply {
 
-    ReplyConstraint rs;
+    ReplyConstraint replyConstraint;
     LastTalk lastTalk;
     public ReserveReply(){
-        rs = ReplyConstraint.getInstance();
+        replyConstraint = ReplyConstraint.getInstance();
     }
 
     public boolean callReserveReply(String roomName, String keyword){
-        lastTalk = rs.lt.get(roomName);
+        lastTalk = replyConstraint.lastTalkMap.get(roomName);
         String topic;
 
-        topic = rs.topicChecker.get(roomName+"dailyApplyhome");
+        topic = replyConstraint.topicChecker.get(roomName+"dailyApplyhome");
         if(topic != null);
 
 

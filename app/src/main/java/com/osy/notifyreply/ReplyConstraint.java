@@ -4,14 +4,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
 
-import com.osy.callapi.AnalysCGV;
 import com.osy.callapi.AnalysConvensia;
-import com.osy.callapi.ApiApplyhome;
+import com.osy.callapi.ApiChatGPT;
 import com.osy.callapi.ApiCoin;
-import com.osy.callapi.ApiCorona;
 import com.osy.callapi.ApiDict;
-import com.osy.callapi.ApiKMA;
-import com.osy.callapi.ApiSellApart;
 import com.osy.callapi.ApiStock;
 import com.osy.callapi.RssNews;
 import com.osy.callapi.RssTopSearch;
@@ -20,11 +16,14 @@ import com.osy.roledb.RoleDB;
 import com.osy.utility.DataRoom;
 import com.osy.utility.LastTalk;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 
 public class ReplyConstraint {
@@ -35,10 +34,11 @@ public class ReplyConstraint {
     protected Map<String, Boolean> isOperation;
     ArrayList<DataRoom<DataRoom<String>>> roomNodes;
 
-    public Map<String, LastTalk> lt = new HashMap<>();
+    public Map<String, LastTalk> lastTalkMap;
 
     Map<String, String> topicChecker;
     Map<String, Map<String, Integer> > personAndScore;
+    ArrayList<String> gptTalkList;
 
     public static ReplyConstraint getInstance(){
         if(instance ==null) instance = new ReplyConstraint();
@@ -48,11 +48,13 @@ public class ReplyConstraint {
         this.context = context;
     }
 
-
     ReplyConstraint() {
-        isOperation = new HashMap<String, Boolean>();
-        topicChecker = new HashMap<String,String>();
-        personAndScore = new HashMap<String, Map<String, Integer> >();
+        isOperation = new HashMap<String, Boolean>();   // key: roomName, value:작동/정지
+        topicChecker = new HashMap<String,String>(); // key : roomName, value: 쪽지내용
+        personAndScore = new HashMap<String, Map<String, Integer> >(); // key: roomName, value: Map<사람, 점수>
+        lastTalkMap = new HashMap<>(); // key: roomName, value: LastTalk
+        gptTalkList = new ArrayList<String>();  // 최근 5개 질문을 저장해서 연계질문이 가능하도록 하기 위함
+
     }
 
     public String[] checkKeyword(String sender, String room, String keyword){
@@ -79,6 +81,9 @@ public class ReplyConstraint {
         reply = ifEducateKeyword(room,keyword);
         if(reply != null) return reply;
 
+        reply = ifMatchGPTKeyword(room,keyword);
+        if(reply != null) return reply;
+
         reply = ifApiQuestion(room,keyword,context);
         if(reply != null) return reply;
 
@@ -100,26 +105,29 @@ public class ReplyConstraint {
         return null;
     }
 
-    public void showNodes(){
+    public String showNodes(){
         Log.i(TAG,"SHOW all Node");
+        StringBuilder sb = new StringBuilder();
         for( DataRoom<DataRoom<String>> s :roomNodes) {
             for (DataRoom<String> t : s.dataList){
                 StringBuilder dataList= new StringBuilder("\n");
-                dataList.append("room("+s.label+")"+"-key("+t.label+") - ");
+                dataList.append(s.label+" / "+""+t.label+" / ");
                 dataList.append("value ("+t.dataList.size()+"set) - ");
                 for(String c : t.dataList){
                     dataList.append(c+" / ");
                 }
                 Log.i(TAG,dataList.toString());
+                sb.append(dataList);
             }
         }
+        return sb.toString();
     }
-
+    // DB 재구성
     public void setInitialize(Context context){
         Log.i(TAG, "method on - setInitialize");
         if(roleDB==null)
             roleDB = new RoleDB(context,"roleList",null,4);
-        Cursor cursor = roleDB.getContainsKeyList(null); // contains
+        Cursor cursor = roleDB.getContainsKeyList(null, null); // contains
         roomNodes = new ArrayList<DataRoom<DataRoom<String>>>();
         while(cursor.moveToNext()) {
             String room = cursor.getString(0);
@@ -128,17 +136,17 @@ public class ReplyConstraint {
 //            Log.i(TAG, "setInstance readRole(r/k/v): "+room+"/"+key+"/"+value);
             roomNodes = new ReplyFunction().setKeyList(roomNodes, room , key, value);
         }
-
         //        showNodes();
     }
 
+    // 학습목록보기
     public String[] ifShowReplyList(String room,String keyword){
         Log.i(TAG, "method on - ifShowReplyList");
         if(keyword.startsWith("학습목록보기") ||keyword.startsWith("ㅎㅅㅁㄹㅂㄱ")|| keyword.startsWith("ㅎㅅㅁㄼㄱ")   ) {
             Cursor cursor;
             StringBuilder sb = new StringBuilder("");
             if(keyword.matches("학습목록보기 전체다")) {
-                cursor = roleDB.getContainsKeyList(null);
+                cursor = roleDB.getContainsKeyList(null, null);
                 while (cursor.moveToNext()) {
                     String key = cursor.getString(1);
                     room = cursor.getString(0);
@@ -148,7 +156,7 @@ public class ReplyConstraint {
                 }
             }
             else {
-                cursor = roleDB.getContainsKeyList(room);
+                cursor = roleDB.getContainsKeyList(room,null);
                 while (cursor.moveToNext()) {
                     String key = cursor.getString(1);
                     String value = cursor.getString(2);
@@ -162,6 +170,7 @@ public class ReplyConstraint {
         return null;
     }
 
+    // reply 키워드 추가
     public boolean addContainsKeyword(String room, String key, String value){
         Log.i(TAG, "method on - addContainsKeyword");
         if(room.length() > 27) room = room.substring(0,27);
@@ -169,10 +178,12 @@ public class ReplyConstraint {
         if(value.length() > 90) value= value.substring(0,90);
 
         roomNodes = new ReplyFunction().setKeyList(roomNodes, room, key, value);
-        roleDB.insertContainKeyword(room, key, value);
+        roleDB.insertContainKeyword(room, key, value, null);
         setInitialize(context);
         return true;
     }
+
+    // 로또
     public String[] ifLotto(String room, String keyword) {
         Log.i(TAG, "method on - ifLotto");
         if(!keyword.contains("로또") || !keyword.contains("추천")) return null;
@@ -184,10 +195,11 @@ public class ReplyConstraint {
             for(int j = 0 ; j < i ; j++)
                 if(number[i] == number[j]) i--;
         }
+        Arrays.sort(number);
         String[] ment = new String[]{
-                "APQ8096,4GB LPDDR SDRAM,32GB EMMC MEM 제가 가진 모든 성능을 동원해서 분석해봤어요\n",
-                "하늘과 우주의 기운 33,899,148,592가지 모아 종합분석해봤어요.\n",
-                "아..그냥 이걸로 사세요\n",
+                "APQ8096,4GB,LPDDR,SDRAM,32GB,EMMC,MEM 제가 가진 모든 성능을 동원해서 분석해봤어요.\n",
+                "하늘과 우주의 기운 33,899,148,592가지를 모아 분석해봤어요.\n",
+                "아.. 귀찮은데 그냥 이걸로 사세요.\n",
                 "지난 회차의 모든 로또번호를 분석해봤어요. 이번 회차는 이 번호가 확실해요.\n"};
         String t = ment[r.nextInt(ment.length)];
         for(int i =0 ; i<6 ; i++) t += number[i]+", " ;
@@ -196,22 +208,23 @@ public class ReplyConstraint {
         return new String[]{t};
     }
 
+    // 멈추기/재시작하기
     public String[] ifOnOff(String room, String keyword){
         Log.i(TAG, "method on - ifOnOff");
-        if(isOperation.get(room)==null){
-            roomNodes = new ReplyFunction().setKeyList(roomNodes, room,"안녕","안녕하세요");
-            roomNodes = new ReplyFunction().setKeyList(roomNodes, room,"하이","하이하이^-^");
-        }
-        if(keyword.matches("이제그만") && isOperation.get(room)) {
+        String[] rst = null;
+        if(isOperation.get(room)==null)
+            addContainsKeyword(room,"안녕","안녕하세요.^^");
+        else if(keyword.matches("이제그만") && isOperation.get(room)) {
             isOperation.replace(room,false);
-            return new String[]{"채팅을 중지할게요."};
+            rst =  new String[]{"채팅을 중지할게요."};
         }
         else if(keyword.matches("다시작동") && !isOperation.get(room)) {
             isOperation.replace(room,true);
-            return new String[]{"채팅을 시작할게요."};
+            rst =  new String[]{"채팅을 시작할게요."};
         }
-        return null;
+        return rst;
     }
+
     public String[] subscriptionDailyNews(String room, String keyword) {
         Log.i(TAG, "method on - subscriptionDailyNews");
         if(!keyword.contains("뉴스")) return null;
@@ -228,21 +241,22 @@ public class ReplyConstraint {
         }
         else if(keyword.contains("보기") || keyword.contains("오늘")||keyword.contains("지금") ||keyword.contains("인기")){
             if(keyword.contains("연합")) return new RssNews().getNews(RssNews.YONHAP);
-            if(keyword.contains("중앙")) return new RssNews().getNews(RssNews.JOONGANG);
-            if(keyword.contains("JTBC") || keyword.contains("jtbc")) return new RssNews().getNews(RssNews.JTBC);
-            if(keyword.contains("연합")) return new RssNews().getNews(RssNews.SBS);
+            if(keyword.contains("동아")) return new RssNews().getNews(RssNews.DONGA);
+            if(keyword.contains("JTBC")) return new RssNews().getNews(RssNews.JTBC);
+            if(keyword.contains("SBS")) return new RssNews().getNews(RssNews.SBS);
             return new RssNews().getNews(new Random().nextInt(4));
         }
         return null;
     }
 
+    //학습목록 삭제
     public String[] ifDeleteKey(String room, String keyword){
         Log.i(TAG, "method on - ifDeleteKey");
         if(keyword.startsWith("학습목록삭제") || keyword.startsWith("ㅎㅅㅁㄹㅅㅈ") || keyword.startsWith("ㅎㅅㅁㄽㅈ")) {
             try {
                 String[] del = keyword.split(" ");
                 int i = Integer.parseInt(del[1]);
-                boolean b = roleDB.deleteContainKey(room, i);
+                boolean b = roleDB.deleteContainKey(room, i, null);
                 if (b) {
                     setInitialize(context);
                     return new String[]{"제거했어요!"};
@@ -256,13 +270,11 @@ public class ReplyConstraint {
         return null;
     }
 
-
+    //등록한 키워드(DB)에 있는가?
     public String[] ifContainsKeyword(String room, String keyword){
         Log.i(TAG, "method on - ifContainsKeyword");
-        boolean isFirstRoom = true;
         for(DataRoom<DataRoom<String>> roomNode : roomNodes)
             if(roomNode.label.matches(room)) {
-                isFirstRoom = false;
                 for (DataRoom<String> keyNode : roomNode.dataList) {
 
                     String[] t = new String[]{keyNode.label};
@@ -273,67 +285,44 @@ public class ReplyConstraint {
                         if (i + 1 == t.length)
                             return new String[]{keyNode.dataList.get(new Random().nextInt(keyNode.dataList.size()))};
                     }
-
                 }
             }
-        if(isFirstRoom) addContainsKeyword(room,"안녕","안녕하세요.^^");
         return null;
     }
 
+
     public String[] ifApiQuestion(String room, String keyword, Context context){
         Log.i(TAG, "method on - ifApiQuestion");
-        if(keyword.contains(" 날씨")) {
-            if(keyword.contains("오늘 날씨")) keyword = "연수구 송도1동 날씨";
-            String[] addr = keyword.split(" ");
-            try {
-                if (addr[2].contains("날씨"))
-                    return new String[]{new ApiKMA(context).getWeather(addr[0], addr[1])};
-            } catch (Exception e) {
-                e.printStackTrace();
-                String[] t =  new String[1];
-                t[0] = "날씨가 궁금하면 아래와 같이 검색해보세요!\n" +
-                        "[구] [동] 날씨\n " +
-                        "예시)부평구 삼산1동 날씨";
-                return t;
-            }
-            return null;
-        }
-        if(keyword.contains("코로나") && ( keyword.contains("확진") || keyword.contains("현재") || keyword.contains("현황") ||keyword.contains("명"))){
-            String re = new ApiCorona(context).getNationalCorona();
-            if(re !=null)
-                return new String[]{new ApiCorona(context).getNationalCorona(),"다들 코로나 조심하세요."};
-        }
-        if(keyword.contains(" 실거래가")){
-            try {
-                String addr = keyword.substring(0, keyword.indexOf("실거래가")-1);
-                return new String[]{new ApiSellApart(context).getPrice(addr)};
-            } catch (Exception e) {
-                e.printStackTrace();
-                String[] t = new String[]{"부동산 실거래가기 궁금하면 아래와 같이 검색해보세요!\n" +
-                        "[법정동] 실거래가\n" +
-                        "예시1)인천광역시 연수구 실거래가\n" +
-                        "예시2)경기도 성남시 분당구 실거래가\n" +
-                        "예시3)서울특별시 송파구 실거래가"};
-                return t;
-            }
-        }
+        ArrayList<String> rst = new ArrayList<>();
         if(keyword.contains("시세")){
+            String coinName = keyword.substring(0, keyword.indexOf("시세")).trim();
             try{
-                String coinName = keyword.substring(0, keyword.indexOf("시세")).trim();
                 String t;
                 if((coinName.contains("모든") || coinName.contains("전체")) && coinName.contains("업비트"))
-                    t = new ApiCoin().getAllPrice_UPBIT();
+                    rst.add( new ApiCoin().getAllPrice_UPBIT() );
                 else if((coinName.contains("모든") || coinName.contains("전체"))&& ( coinName.contains("빗썸") ||coinName.contains("빗섬")) )
-                    t = new ApiCoin().getAllPrice_BITHUMB();
-                else
-                    t = new ApiCoin().getPrice(coinName);
-
-                if(t==null) return null;
-                return new String[]{t};
+                    rst.add(new ApiCoin().getAllPrice_BITHUMB());
+                else {
+                    rst.add( new ApiCoin().getPrice(coinName)); // 코인
+                }
             }catch (Exception e){
                 e.printStackTrace();
             }
+
+            Cursor cursor = roleDB.getStockList(coinName, null);
+            ArrayList<String[]> nameCodeList = new ArrayList<>();
+            while(cursor.moveToNext()) {
+                String stockType = cursor.getString(0);
+                String stockCode = cursor.getString(1);
+                String stockName = cursor.getString(2);
+                nameCodeList.add( new String[]{stockType, stockCode, stockName});
+            }
+            rst.addAll( new ApiStock(context).getStocks(nameCodeList) );
+            rst.removeIf(Objects::isNull);
+            if(rst.size()<1) return null;
+            return (String[]) rst.toArray(new String[0]);
         }
+
         /*Stream API 연습
         IntStream.range(1, 11 ).filter(i-> i%2==0).forEach(System.out::println);
         String keyword2[] = new String[]{"asdad"};
@@ -352,52 +341,11 @@ public class ReplyConstraint {
         if(keyword.contains("검색어") && (keyword.contains("실시간") || keyword.contains("인기")) )
             return new String[]{new RssTopSearch().getTopSearchKeyword()};
 
-
-        if( (keyword.contains("CGV") ||  keyword.contains("cgv"))){
-            Calendar cal = Calendar.getInstance();
-            if(keyword.contains("내일"))
-                cal.add(Calendar.DATE,1);
-            else if(keyword.contains("토요일"))
-                cal.add(Calendar.DATE,7- cal.get(Calendar.DAY_OF_WEEK));
-            else if(keyword.contains("일요일"))
-                cal.add(Calendar.DATE,(8-cal.get(Calendar.DAY_OF_WEEK))%7 );
-            else if(keyword.contains("월요일"))
-                cal.add(Calendar.DATE,(9-cal.get(Calendar.DAY_OF_WEEK)) %7 );
-            else if(keyword.contains("화요일"))
-                cal.add(Calendar.DATE,(10-cal.get(Calendar.DAY_OF_WEEK)) %7 );
-            else if(keyword.contains("수요일"))
-                cal.add(Calendar.DATE,(11-cal.get(Calendar.DAY_OF_WEEK)) %7 );
-            else if(keyword.contains("목요일"))
-                cal.add(Calendar.DATE,(12-cal.get(Calendar.DAY_OF_WEEK)) %7 );
-            else if(keyword.contains("금요일"))
-                cal.add(Calendar.DATE,(13-cal.get(Calendar.DAY_OF_WEEK)) %7 );
-
-            String month = ""+ (cal.get(Calendar.MONTH)+1 <10 ? "0"+(cal.get(Calendar.MONTH)+1) : cal.get(Calendar.MONTH)+1);
-            String date = ""+ (cal.get(Calendar.DATE) <10 ? "0"+cal.get(Calendar.DATE) : cal.get(Calendar.DATE));
-            if(keyword.contains("시간표"))
-                return new String[]{new AnalysCGV().cgvTimeTable(cal.get(Calendar.YEAR)+month+date,keyword)};
-            else {
-                String[] t = new String[2];
-                t[0] = new AnalysCGV().cgvRunningMoive(cal.get(Calendar.YEAR) + month + date);
-                t[1] = "상영시간표도 알려드려요!\nCGV 시간표 [영화제목]";
-                return t;
-            }
-        }
-        if(keyword.contains("청약") && (keyword.contains("정보")|| keyword.contains("접수"))){
-            String[] t = new ApiApplyhome(context).getApplyhome(keyword);
-            if(t != null) return t;
-        }
-
-        if(keyword.contains("주식") || keyword.contains("주가")){
-            String t = new ApiStock(context).getStocks(keyword);
-            if(t !=null) return new String[]{t};
-        }
-
         if(keyword.contains("컨벤시아")){
             String t = new AnalysConvensia().getConvensia(keyword);
             if(t !=null) return new String[]{t};
         }
-        if(keyword.contains("영업시간") || (keyword.contains("전화번호") ) || keyword.contains("위치정보")){
+        if( (keyword.contains("전화번호") ) || keyword.contains("가보신") ){
             String[] t = new AnalysPlace().getPlace(keyword);
             if(t !=null) return t;
         }
@@ -406,14 +354,25 @@ public class ReplyConstraint {
             String[] t = new AnalysPlace().recommandPlace(keyword);
             if(t !=null) return t;
         }
-
-
         return null;
     }
     public String[] ifMatchExpletiveKeyword(String room, String keyword){
         Log.i(TAG, "method on - ifMatchExpletiveKeyword");
 //        for(String s : expletiveKeyword)
 //         if (keyword.contains(s)) return "욕하지마세요ㅜ_ㅜ";
+        return null;
+    }
+
+    public String[] ifMatchGPTKeyword(String room, String keyword){
+        Log.i(TAG, "method on - ifMatchGPTKeyword");
+        if(keyword.length()>10)
+            if(keyword.startsWith("ai야 ") || keyword.startsWith("AI야 ")) {
+                keyword = keyword.substring(4);
+                if (gptTalkList.size() >= 5)
+                    gptTalkList.remove(0);
+                else gptTalkList.add(keyword);
+                return new String[]{new ApiChatGPT(context).getCompletions(gptTalkList)};
+            }
         return null;
     }
 
@@ -441,33 +400,14 @@ public class ReplyConstraint {
         Log.i(TAG, "method on - specialKeyword");
         if( !keyword.contains("도움말") || !keyword.contains("봇")) return null;
 
-        if(keyword.contains("11")){
-//            Log.i(TAG, "@@@@@@@@@@"+roleDB.createConsonantQuiz("consonantGame_Drama",roleDB.consonantQuiz_Drama));
-//            Log.i(TAG, "@@@@@@@@@@"+roleDB.createConsonantQuiz("consonantGame_Movie",roleDB.consonantQuiz_Movie));
-            return null;
-        }
         int seq = 1;
         String[] t = new String[]{
-                seq+++">코로나 현황 확인\n" +
-                        "ex) 코로나",
                 seq+++">국어사전 검색\n" +
                         "-> [검색어]가 뭐야\n" +
                         "ex) 나무가 뭐야",
-                seq+++">날씨 확인\n" +
-                        "-> 오늘 날씨\n" +
-                        "-> [구] [동] 날씨\n" +
-                        "ex) 연수구 송도1동 날씨",
                 seq+++">인기 검색어 확인\n" +
                         "ex) 실시간 검색어\n" +
                         "ex) 인기 검색어",
-                seq+++">타임스페이스CGV 확인\n" +
-                        "ex) CGV\n" +
-                        "ex) 내일 CGV\n" +
-                        "ex) 금요일 CGV\n" +
-                        "-> CGV [제목] 시간표\n" +
-                        "ex) CGV 인셉션 시간표\n" +
-                        "ex) CGV 토요일 인셉션 시간표\n" +
-                        "ex) CGV 내일 인셉션 시간표",
                 seq+++">맛집 추천\n" +
                         "ex) 한식 맛집 추천\n" +
                         "ex) 커넬워크 맛집 추천",
@@ -489,13 +429,6 @@ public class ReplyConstraint {
                         "ex) 퀴즈 시작\n" +
                         "ex) 퀴즈 중지\n" +
                         "ex) 힌트",
-                seq+++">부동산 실거래가 확인\n" +
-                        "-> [시] [구] 실거래가\n" +
-                        "ex) 인천광역시 연수구 실거래가",
-                seq+++">청약 정보 확인\n" +
-                        "ex) 청약정보\n" +
-                        "ex) 청약정보 특별공급\n" +
-                        "ex) 청약정보 2순위",
                 seq+++">로또번호 추천\n" +
                         "ex) 로또 추천",
                 seq+++">말 가르치기\n" +
@@ -512,16 +445,16 @@ public class ReplyConstraint {
         return t;
     }
 
+    // 2025. topicChecker라는 맵 하나를 너무 우려먹는듯... 좀 분리해야할 필요가 있어보인다.
     public String[] ifConsonantGame(String sender, String room, String str){
         Log.i(TAG, "method on - ifConsonantGame");
-        String[] quizName = new String[]{"consonantQuiz_lol", "consonantQuiz_lol_skin","consonantQuiz_Drama", "consonantQuiz_Nation","consonantQuiz_Movie"};
 
         String quizRoom = "beforeConsonantGame"+room;
         String quizRoomType = quizRoom+"type";
 
         String answar = topicChecker.get(quizRoom);
 
-        if(answar!=null) {
+        if(answar!=null) {  //퀴즈가 진행중인가?
             if (str.matches(answar)) { // SCORE +
                 if (personAndScore.get(room) == null) {
                     personAndScore.put(room, new HashMap<>() );
@@ -534,13 +467,13 @@ public class ReplyConstraint {
                 topicChecker.remove(quizRoom);
                 String displySender = sender.contains("/") ?  sender.substring(0,sender.indexOf("/")) : sender;
 
-                String question = roleDB.getConsonantQuestion(topicChecker.get(quizRoomType));
+                String question = roleDB.getConsonantQuestion(topicChecker.get(quizRoomType), null);
                 topicChecker.put(quizRoom, question );
                 ArrayList<String> reply = new ArrayList<>();
                 Random r = new Random();
                 r.setSeed(System.currentTimeMillis());
                 reply.add(displySender + "님 " + personAndScore.get(room).get(sender) + "점!\n" + answar + " 정답이에요!");
-                if (r.nextInt(10) < 2) reply.add("와 잘하세요!");
+                if (r.nextInt(20) < 2) reply.add("와 잘하세요!");
                 if (r.nextInt(50) < 2) reply.add("점수가 궁금하면 [점수 확인]!");
                 if (r.nextInt(50) < 2) reply.add("그만하시려면 [퀴즈중지]!");
                 if (r.nextInt(200) < 2) reply.add("문제를 추가하고 싶으세요?\n다음과 같이 적어보세요!\n ex)문제추가 도레미파솔");
@@ -557,25 +490,24 @@ public class ReplyConstraint {
                 String question= new ReplyFunction().consonant(answar);
                 String result = "힌트! ";
                 for(int i =0 ; i< answar.length() ; i++)
-                    result += (new Random().nextBoolean() ? question.charAt(i) : answar.charAt(i) );
+                    result += (new Random().nextBoolean() ? question.charAt(i) : answar.charAt(i));
+
                 return new String[]{result};
             }
         }
 
-        if(str.contains("퀴즈") && str.contains("시작")) {
-            if(answar != null)
-                return new String[]{"지난퀴즈 정답자가 없어요.\n주제는 롤 스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar)};
 
-            topicChecker.put(quizRoomType, quizName[new Random().nextInt(quizName.length)] );   // 퀴즈주제 랜덤지정
-            String question = roleDB.getConsonantQuestion(topicChecker.get(quizRoomType));  //퀴즈 랜덤 추출
-            topicChecker.put(quizRoom, question);   // 해당 채팅방에 퀴즈 등록
-            StringBuilder sb = new StringBuilder("주제는 [");
-            if(topicChecker.get(quizRoomType)=="consonantQuiz_lol") sb.append("롤 관련");
-            else if(topicChecker.get(quizRoomType)=="consonantQuiz_lol_skin") sb.append("롤 스킨");
-            else if(topicChecker.get(quizRoomType)=="consonantQuiz_Drama") sb.append("드라마 제목");
-            else if(topicChecker.get(quizRoomType)=="consonantQuiz_Nation") sb.append("나라 이름");
-            else if(topicChecker.get(quizRoomType)=="consonantQuiz_Movie") sb.append("영화 제목");
-            sb.append("]! 맞춰보세요!\n");
+
+
+        if(str.contains("퀴즈") && str.contains("시작")) {
+//            if(answar != null)
+//                return new String[]{"지난퀴즈 정답자가 없어요.\n주제는 롤 스킨! 맞춰보세요!\n초성: " + new ReplyFunction().consonant(answar)};
+            int quizIndex = new Random().nextInt(roleDB.getGameTableNameMap().size() ); // 퀴즈주제 랜덤지정
+            String quizName = (String) roleDB.getGameTableNameMap().keySet().toArray()[quizIndex]; // 퀴즈주제 랜덤지정
+            topicChecker.put(quizRoomType, quizName );   // 채팅방에 퀴즈 "주제" 등록
+            String question = roleDB.getConsonantQuestion(quizName, null);  //퀴즈 랜덤 추출
+            topicChecker.put(quizRoom, question);   // 해당 채팅방에 "주제"에 "문제" 등록
+            StringBuilder sb = new StringBuilder("주제는 ["+ roleDB.getGameTableNameMap().get(quizName) + "]! 맞춰보세요!\n");
             sb.append("초성"+ new ReplyFunction().consonant(question));
             return new String[]{sb.toString()};
         }
@@ -598,9 +530,9 @@ public class ReplyConstraint {
 
         if(str.startsWith("문제추가 ")) {
             try {
-                roleDB.putConsonantQuestion(topicChecker.get(quizRoomType), str.substring(5));
+                roleDB.putConsonantQuestion(topicChecker.get(quizRoomType), str.substring(5), null);
                 return new String[]{new ReplyFunction().consonant(str.substring(5)) + " 추가했어요\n" +
-                        "문제는 총 "+roleDB.getTableSize(topicChecker.get(quizRoomType))+"개에요."};
+                        "문제는 총 "+roleDB.getTableSize(topicChecker.get(quizRoomType), null)+"개에요."};
             }catch (Exception e){e.printStackTrace(); }
         }
 
